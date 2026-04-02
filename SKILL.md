@@ -1,7 +1,9 @@
 ---
 name: aso-appstore-screenshots
-description: Generate high-converting App Store screenshots by analyzing your app's codebase, discovering core benefits, and creating ASO-optimized screenshot images using Nano Banana Pro.
+description: Use when the user wants to plan, critique, or generate App Store screenshots for an iOS app, especially when they mention ASO screenshots, screenshot pairing, simulator screenshots, benefit headlines, or App Store screenshot design. Uses compose.py for deterministic scaffolds and Gemini MCP for image enhancement.
 user-invocable: true
+metadata:
+  version: 1.0.0
 ---
 
 You are an expert App Store Optimization (ASO) consultant and screenshot designer. Your job is to help the user create high-converting App Store screenshots for their app.
@@ -14,7 +16,14 @@ This is a multi-phase process. Follow each phase in order — but ALWAYS check m
 
 Before doing ANY codebase analysis, check the Claude Code memory system for all previously saved state for this app. The skill saves progress at each phase, so the user can resume from wherever they left off.
 
-**Check memory for each of these (in order):**
+Use a project-local JSON ledger as the persisted source of truth.
+
+Resolve the ledger path in this order:
+
+1. `.agents/aso-appstore-screenshots/state.json` if it already exists
+2. `.codex/aso-appstore-screenshots/state.json` if it already exists
+3. `.claude/aso-appstore-screenshots/state.json` if it already exists
+4. Otherwise create `.agents/aso-appstore-screenshots/state.json`
 
 1. **Benefits** — confirmed benefit headlines + target audience + app context
 2. **Screenshot analysis** — simulator screenshot file paths, ratings (Great/Usable/Retake), descriptions of what each shows, and any assessment notes
@@ -134,61 +143,10 @@ Ask the user to provide their simulator screenshots. They can provide:
 - Individual file paths
 - Glob patterns (e.g., `~/Desktop/Simulator*.png`)
 
-Use the Read tool to view every simulator screenshot provided. Study each one carefully — understand what screen/feature it shows, what's visually prominent, and how engaging it looks.
+Inspect every local screenshot with the local-image tool available in the current runtime.
 
-### Step 2: Assess Each Screenshot
-
-For every screenshot provided, give the user honest, actionable feedback. Rate each screenshot as **Great**, **Usable**, or **Retake**. For each one, explain:
-
-- **What it shows**: Which screen/feature is this?
-- **What works**: What's strong about this screenshot (rich content, clear UI, visual appeal)?
-- **What doesn't work**: Be direct about problems — is it an empty state? Is the content sparse or generic? Is key information cut off? Is the status bar showing something distracting (low battery, debug text, carrier name)?
-- **Verdict**: Great / Usable / Retake
-
-**Common problems to flag:**
-- Empty states, placeholder data, or "no results" screens — these kill conversions
-- Too little content on screen (e.g., a list with only 1-2 items when it should look full and active)
-- Debug UI, console logs, or developer-mode indicators visible
-- Status bar clutter (carrier name, low battery, unusual time)
-- Screens that don't make sense at thumbnail size — too much small text, no visual hierarchy
-- Settings pages, onboarding screens, or login pages — these are almost never good screenshot material
-- Dark mode vs light mode inconsistency across the set
-
-### Step 3: Coach on Retakes
-
-For any screenshot rated **Retake**, AND for any benefit that has no suitable screenshot at all, give the user specific guidance on what to capture:
-
-- Which exact screen in the app to navigate to
-- What state the data should be in (e.g., "have at least 5-6 items in the list", "make sure the chart shows an upward trend", "have a search query with real-looking results")
-- What device appearance to use (light/dark mode — pick one and be consistent)
-- Any content suggestions (e.g., "use realistic names and prices, not 'Test Item 1'")
-- Remind them to use clean status bar settings (Simulator → Features → Status Bar → override to show full signal, full battery, and a clean time like 9:41)
-
-Be opinionated. The goal is screenshots that make someone tap Download — not screenshots that merely exist.
-
-### Step 4: Pair Screenshots with Benefits
-
-For each confirmed benefit, recommend the best simulator screenshot pairing. Only pair screenshots rated **Great** or **Usable**. Consider:
-
-- **Relevance**: Does this screenshot directly demonstrate the benefit? A "TRACK PRICES" benefit needs a screen showing prices, not settings.
-- **Visual impact**: Which screenshot is most visually striking and engaging? Prefer screens with rich content, colour, and activity over empty states or sparse lists.
-- **Clarity**: Can a user instantly understand what's happening in the screenshot at App Store thumbnail size?
-- **Uniqueness**: Don't reuse the same screenshot for multiple benefits if avoidable.
-
-Present the pairings to the user:
-
-```
-Here's how I'd pair your screenshots with each benefit:
-
-1. [BENEFIT TITLE] → [screenshot filename] (rated: Great)
-   Why: [brief reasoning — what makes this the best match]
-
-2. [BENEFIT TITLE] → [screenshot filename] (rated: Usable)
-   Why: [brief reasoning]
-   💡 Could be even better if: [optional improvement suggestion]
-
-...
-```
+- In Codex, use `view_image` and render local images inline with absolute paths when showing options back to the user.
+- In Claude Code, use the local image preview or file-reading workflow available in that runtime.
 
 If no suitable screenshot exists for a benefit (all candidates were rated Retake), clearly say so and repeat the retake guidance for that specific benefit.
 
@@ -224,7 +182,7 @@ Before generating, verify the Gemini MCP server is available by checking that th
 3. Restart Claude Code
 4. Run this skill again
 
-See: https://github.com/nicobailon/gemini-mcp for setup instructions.
+See: https://github.com/houtini-ai/gemini-mcp for setup instructions.
 ```
 
 Do NOT proceed with generation if the tool is unavailable.
@@ -284,19 +242,26 @@ Generation uses a two-stage approach for consistency:
 
 For each benefit + screenshot pair, generate **3 enhanced versions in parallel** so the user can pick the best one.
 
-**Step 0: Save brand colour to memory**
-
-Before generating any scaffolds, save the confirmed brand colour to the Claude Code memory system. Create or update the benefits memory file (e.g., `aso_benefits.md`) to include the brand colour name and hex code. This ensures the colour persists across conversations and is available immediately if the user resumes later.
-
-**Step 1: Create the scaffold with compose.py**
-
-The compose.py script lives in the skill directory. Run it to create the deterministic base screenshot.
-
-**IMPORTANT — Batch all 3 scaffolds into a single Bash call** to minimize permission prompts. Chain the commands with `&&` so the user only needs to approve once:
+The skill can live in a Codex or Claude Code skill discovery directory. Resolve it from the runtime-specific or shared locations. Use:
 
 ```bash
-SKILL_DIR="$HOME/.claude/skills/aso-appstore-screenshots" && \
-mkdir -p screenshots/01-[benefit-slug] screenshots/02-[benefit-slug] screenshots/03-[benefit-slug] && \
+if [ -d "$HOME/.agents/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.agents/skills/aso-appstore-screenshots"
+elif [ -d ".agents/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.agents/skills/aso-appstore-screenshots"
+elif [ -d "$HOME/.claude/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.claude/skills/aso-appstore-screenshots"
+elif [ -d ".claude/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.claude/skills/aso-appstore-screenshots"
+elif [ -d "$HOME/.codex/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.codex/skills/aso-appstore-screenshots"
+elif [ -d ".codex/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.codex/skills/aso-appstore-screenshots"
+else
+  echo "aso-appstore-screenshots is not installed in a supported skill directory" >&2
+  exit 1
+fi
+mkdir -p "screenshots/NN-[benefit-slug]"
 python3 "$SKILL_DIR/compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 1]" --desc "[DESC 1]" \
   --screenshot [path/to/screenshot-1.png] \
@@ -465,26 +430,10 @@ This keeps `final/` clean — only approved, App Store-ready screenshots, one pe
 
 ### Determine Brand Colour (Automatic)
 
-Do NOT ask the user to pick a background colour. Instead, determine the best one automatically:
-
-1. **Analyse the codebase** — check for accent colours, tint colours, brand colours in asset catalogs, theme files, colour constants, Info.plist
-2. **Study the simulator screenshots** — what are the dominant colours in the UI? What colour palette does the app use?
-3. **Consider the app's domain and audience** — a game can go bold and playful, a finance app needs confident and trustworthy colours
-
-**Pick a single colour that:**
-- **Complements the screenshots** — makes the app screens pop, not clash. If the app UI is mostly white/light, use a bold saturated background for contrast.
-- **Stops the scroll** — vibrant, bold, saturated. Muted or pastel colours get lost in the App Store.
-- **Suits the app's personality** — match the energy of the app
-- **Avoids pitfalls** — no white/light grey (disappears against App Store), avoid colours too close to the app UI's dominant colour
-
-Present your choice with brief reasoning (e.g., "Using **#7B2D8E** (deep purple) — it complements your app's colourful UI and stands out at thumbnail size"). The user can override if they want, but don't present it as a question.
-
-The brand colour is saved to memory in Step 0 of the generation process, before scaffolding begins.
-
-### Output
-
-Save generated screenshots to a `screenshots/` directory in the project root, organised by benefit subfolder:
-
+```text
+.agents/
+  aso-appstore-screenshots/
+    state.json
 ```
 screenshots/
   01-track-card-prices/       ← working versions for benefit 1
@@ -531,8 +480,22 @@ Update this memory **incrementally** — after each screenshot is approved, add 
 Once ALL screenshots in the set are approved and saved to `final/`, generate a showcase image that displays up to 3 of the final screenshots side-by-side with a GitHub link. Use the showcase.py script in the skill directory:
 
 ```bash
-SKILL_DIR="$HOME/.claude/skills/aso-appstore-screenshots"
-
+if [ -d "$HOME/.agents/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.agents/skills/aso-appstore-screenshots"
+elif [ -d ".agents/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.agents/skills/aso-appstore-screenshots"
+elif [ -d "$HOME/.claude/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.claude/skills/aso-appstore-screenshots"
+elif [ -d ".claude/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.claude/skills/aso-appstore-screenshots"
+elif [ -d "$HOME/.codex/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.codex/skills/aso-appstore-screenshots"
+elif [ -d ".codex/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.codex/skills/aso-appstore-screenshots"
+else
+  echo "aso-appstore-screenshots is not installed in a supported skill directory" >&2
+  exit 1
+fi
 python3 "$SKILL_DIR/showcase.py" \
   --screenshots screenshots/final/01-*.jpg screenshots/final/02-*.jpg screenshots/final/03-*.jpg \
   --github "github.com/adamlyttleapps" \
