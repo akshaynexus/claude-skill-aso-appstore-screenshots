@@ -15,37 +15,55 @@ The repository root is the `aso-appstore-screenshots` skill. It supports both Cl
 
 ## Architecture
 
-Five files + one asset make up the skill:
+Six files + two assets make up the skill:
 
 - **SKILL.md** — The shared skill prompt. Defines the multi-phase workflow: Benefit Discovery → Screenshot Pairing → Generation → Showcase.
-- **compose.py** — A Pillow-based compositor that renders deterministic 1290×2796 screenshot scaffolds with the headline text, device frame template, and simulator screenshot.
-- **generate_frame.py** — Regenerates `assets/device_frame.png`.
+- **compose.py** — A Pillow-based compositor that renders deterministic screenshot scaffolds with headline text, device frame template, and simulator screenshot. Supports multiple device profiles (iPhone 6.7", 6.5", 6.9", Android) via `--device` flag. Cross-platform font resolution (macOS/Linux/Windows).
+- **generate_frame.py** — Regenerates `assets/device_frame.png` and `assets/device_frame_android.png`. Supports `--device` flag for all profiles.
 - **showcase.py** — Generates the final side-by-side preview of approved screenshots.
 - **resize.py** — Cross-platform screenshot crop/resize (replaces macOS-only `sips`).
 - **assets/device_frame.png** — Pre-rendered iPhone frame template used by `compose.py`.
+- **assets/device_frame_android.png** — Pre-rendered Android frame template with punch-hole camera.
 
-- **SKILL.md** — The skill prompt. Defines a multi-phase workflow: Benefit Discovery → Screenshot Pairing → Generation. Uses Claude Code's memory system to persist state across conversations so users can resume mid-workflow. Generation first creates a deterministic scaffold via compose.py, then sends it to Nano Banana Pro for AI enhancement.
-- **compose.py** — A standalone Python compositing script (Pillow-based) that deterministically renders App Store screenshots. Takes a background hex colour, action verb, benefit descriptor, and simulator screenshot path, then produces a pixel-perfect 1290×2796 PNG with headline text, device frame template, and the screenshot composited inside. The verb text auto-sizes to fit the canvas width.
-- **resize.py** — Cross-platform crop and resize script (Pillow-based). Takes one or more images and crops them to the target aspect ratio (center-crop, top edge preserved) then resizes to exact pixel dimensions. Provides a cross-platform alternative to the macOS-only `sips` commands. Works on macOS, Linux, and Windows.
-- **generate_frame.py** — Generates the device frame template PNG (`assets/device_frame.png`). Run once to create or update the template. The template is a 1290×2796 RGBA PNG with a black iPhone body, transparent screen cutout, Dynamic Island, and side buttons.
-- **showcase.py** — Generates a showcase image showing up to 3 final screenshots side-by-side with an optional GitHub link at the bottom. Used as the final step after all screenshots are approved.
-- **assets/device_frame.png** — Pre-rendered iPhone device frame template used by compose.py. Using a template instead of drawing the frame at compose time ensures pixel-perfect consistency across all generated screenshots.
->>>>>>> ff8f773 (Add cross-platform resize.py, keep sips as macOS fallback)
+## Device Profiles
 
-## Working Conventions
+| Profile | Dimensions | Store | Frame |
+|---------|-----------|-------|-------|
+| `iphone-6.7` | 1290×2796 | App Store | device_frame.png |
+| `iphone-6.5` | 1242×2688 | App Store | device_frame.png |
+| `iphone-6.9` | 1320×2868 | App Store | device_frame.png |
+| `android` | 1080×2400 | Google Play | device_frame_android.png |
 
-- Keep Claude Code and Codex support aligned instead of treating one as legacy.
-- When editing runtime instructions, document Claude-specific and Codex-specific behavior separately if they differ.
-- Prefer shared project-local state and shared helper scripts over runtime-specific logic in Python code.
-- Do not reintroduce the old Claude memory-file workflow unless explicitly requested. The shared JSON ledger replaced it.
-
-## Verification
-
-Run these checks after changing the screenshot skill packaging or prompt:
+## Running compose.py
 
 ```bash
-python3 -m py_compile compose.py generate_frame.py showcase.py
-git diff --check
+# Requires: pip install Pillow
+
+# iPhone 6.7" (default)
+python3 compose.py \
+  --bg "#E31837" \
+  --verb "TRACK" \
+  --desc "TRADING CARD PRICES" \
+  --screenshot path/to/simulator.png \
+  --output output.png
+
+# Android (Google Play)
+python3 compose.py \
+  --bg "#4CAF50" \
+  --verb "TRACK" \
+  --desc "YOUR EXPENSES" \
+  --screenshot path/to/emulator.png \
+  --output output.png \
+  --device android
+
+# Custom font (cross-platform)
+python3 compose.py \
+  --bg "#E31837" \
+  --verb "TRACK" \
+  --desc "CARD PRICES" \
+  --screenshot path/to/simulator.png \
+  --output output.png \
+  --font "Inter-Black.otf"
 ```
 
 ## Running resize.py
@@ -56,12 +74,6 @@ git diff --check
 # Default: iPhone 6.7" (1290×2796)
 python3 resize.py screenshots/01-benefit/v1.jpg screenshots/01-benefit/v2.jpg screenshots/01-benefit/v3.jpg
 
-# Custom dimensions
-python3 resize.py --width 1242 --height 2688 screenshots/*.jpg
-```
-
-Also confirm:
-
 # Custom dimensions (e.g. iPhone 6.5")
 python3 resize.py --width 1242 --height 2688 screenshots/01-benefit/v*.jpg
 ```
@@ -69,7 +81,23 @@ python3 resize.py --width 1242 --height 2688 screenshots/01-benefit/v*.jpg
 Each input file gets a `-resized` sibling (e.g. `v1.jpg` → `v1-resized.jpg`). Crops to the target aspect ratio (center-crop, top edge preserved) then resizes to exact dimensions.
 
 ## Key Design Decisions
->>>>>>> ff8f773 (Add cross-platform resize.py, keep sips as macOS fallback)
+
+- **Device profiles system**: All layout values are derived from canvas size so each profile produces correctly proportioned output.
+- **Proportional typography**: Font sizes scale proportionally to canvas width instead of fixed pixels, ensuring consistent appearance across device profiles.
+- **Cross-platform font resolution**: `--font` accepts either a filename (searched in platform font dirs) or a full path. Falls back to platform defaults (SF Pro Display Black on macOS, Noto Sans Black on Linux, Arial Bold on Windows).
+- **Two-stage generation**: compose.py creates a deterministic scaffold first (text + frame + screenshot), then Nano Banana Pro enhances it.
+- **Shared JSON ledger**: Project-local state at `.agents/aso-appstore-screenshots/state.json` for resumability across Codex and Claude Code.
+
+## Verification
+
+Run these checks after changing the screenshot skill packaging or prompt:
+
+```bash
+python3 -m py_compile compose.py generate_frame.py showcase.py resize.py
+git diff --check
+```
+
+Also confirm:
 
 - `README.md`, `SKILL.md`, `AGENTS.md`, and `CLAUDE.md` agree on dual-runtime support
 - the screenshot skill still resolves from `.agents/skills` and `.claude/skills`
