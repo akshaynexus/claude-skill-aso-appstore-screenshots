@@ -202,8 +202,13 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, device="iphone-6.7
 
     # ── 3. Screenshot into screen area ──────────────────────────────
     shot = Image.open(screenshot_path).convert("RGBA")
-    scale = screen_w / shot.width
-    sc_w = screen_w
+    visible_screen_h = canvas_h - screen_y + 500
+    # Scale to fill: use the larger scale factor so the screenshot
+    # covers both width and visible height (no black gaps)
+    scale_w = screen_w / shot.width
+    scale_h = visible_screen_h / shot.height
+    scale = max(scale_w, scale_h)
+    sc_w = int(shot.width * scale)
     sc_h = int(shot.height * scale)
     shot = shot.resize((sc_w, sc_h), Image.LANCZOS)
 
