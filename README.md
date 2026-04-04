@@ -103,6 +103,8 @@ The screenshot scaffold renderer uses **SF Pro Display Black** for headline text
 /Library/Fonts/SF-Pro-Display-Black.otf
 ```
 
+You can also use any custom font installed in `/Library/Fonts/`. The skill will ask which font you'd like during the generation phase. To use a custom font, just provide the filename (e.g., `Inter-Black.otf`, `Montserrat-Black.ttf`).
+
 ### 6. Configure Gemini MCP
 
 Both skills use Gemini as the generation and editing backend.
