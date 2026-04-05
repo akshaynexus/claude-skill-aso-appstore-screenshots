@@ -246,11 +246,11 @@ For each benefit + screenshot pair, generate **3 enhanced versions in parallel**
 
 Before generating any scaffolds, save the confirmed brand colour to the Claude Code memory system. Create or update the benefits memory file (e.g., `aso_benefits.md`) to include the brand colour name and hex code. This ensures the colour persists across conversations and is available immediately if the user resumes later.
 
-**Step 1: Ask User what font to use**
+**Step 1: Ask the user which font to use**
 
-Ask the user which font they'd like for the screenshot headlines. They should provide a font filename from `/Library/Fonts/` (e.g., `Inter-Black.otf`, `Montserrat-Black.ttf`). If the user says "default" or doesn't have a preference, omit the `--font` flag entirely and compose.py will use SF Pro Display Black.
+Ask the user which font they'd like for the screenshot headlines. The script auto-detects a platform default (SF Pro Display Black on macOS, Noto Sans Black on Linux, Arial Bold on Windows), so if the user says "default" or doesn't have a preference, omit the `--font` flag.
 
-Save the chosen font to memory alongside the brand colour so it persists across conversations.
+They can provide a font filename (e.g., `Inter-Black.otf`) or a full path (e.g., `/usr/share/fonts/truetype/noto/NotoSans-Black.ttf`). Save the chosen font to memory alongside the brand colour so it persists across conversations.
 
 **Step 2: Create the scaffold with compose.py**
 
@@ -273,7 +273,7 @@ else
   echo "aso-appstore-screenshots is not installed in a supported skill directory" >&2
   exit 1
 fi
-
+```
 The compose.py script lives in the skill directory. Run it to create the deterministic base screenshot. If the user chose a custom font, pass `--font "filename.otf"` to each compose.py call. If using the default, omit `--font`.
 
 **IMPORTANT — Batch all 3 scaffolds into a single Bash call** to minimize permission prompts. Chain the commands with `&&` so the user only needs to approve once:

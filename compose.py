@@ -10,6 +10,8 @@ matching the proportions seen in professional App Store screenshots.
 
 import argparse
 import os
+import platform
+import subprocess
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 
 # ── Canvas ──────────────────────────────────────────────────────────
@@ -35,9 +37,56 @@ DESC_LINE_GAP = 24
 MAX_TEXT_W = int(CANVAS_W * 0.92)
 MAX_VERB_W = int(CANVAS_W * 0.92)
 
-FONT_ROOT = "/Library/Fonts"
-DEFAULT_FONT = "SF-Pro-Display-Black.otf"
 FRAME_PATH = os.path.join(os.path.dirname(__file__), "assets", "device_frame.png")
+
+# ── Cross-platform font resolution ─────────────────────────────────
+_SYSTEM = platform.system()
+
+if _SYSTEM == "Darwin":
+    _FONT_DIRS = ["/Library/Fonts", os.path.expanduser("~/Library/Fonts")]
+    _DEFAULT_FONT = "SF-Pro-Display-Black.otf"
+elif _SYSTEM == "Linux":
+    _FONT_DIRS = [
+        "/usr/share/fonts/truetype/noto",
+        "/usr/share/fonts/truetype",
+        "/usr/share/fonts",
+        "/usr/local/share/fonts",
+        os.path.expanduser("~/.local/share/fonts"),
+    ]
+    _DEFAULT_FONT = "NotoSans-Black.ttf"
+else:  # Windows
+    _FONT_DIRS = [os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")]
+    _DEFAULT_FONT = "arialbd.ttf"
+
+
+def _resolve_font(font_name):
+    """Find a font file by name, searching platform-appropriate directories.
+
+    Accepts either a bare filename (searched in platform font dirs) or a full
+    absolute path. On Linux, falls back to ``fc-match`` if the file isn't
+    found in the standard directories.
+    """
+    if os.path.isabs(font_name) and os.path.isfile(font_name):
+        return font_name
+    for d in _FONT_DIRS:
+        candidate = os.path.join(d, font_name)
+        if os.path.isfile(candidate):
+            return candidate
+    # Linux fallback: ask fontconfig
+    if _SYSTEM == "Linux":
+        try:
+            result = subprocess.run(
+                ["fc-match", "-f", "%{file}", font_name],
+                capture_output=True, text=True,
+            )
+            if result.returncode == 0 and os.path.isfile(result.stdout.strip()):
+                return result.stdout.strip()
+        except FileNotFoundError:
+            pass
+    raise FileNotFoundError(
+        f"Font '{font_name}' not found in: {', '.join(_FONT_DIRS)}. "
+        f"Pass a full path with --font /path/to/font.ttf"
+    )
 
 
 def hex_to_rgb(h):
@@ -84,9 +133,9 @@ def draw_centered(draw, y, text, font, max_w=None):
     return y
 
 
-def compose(bg_hex, verb, desc, screenshot_path, output_path, font):
+def compose(bg_hex, verb, desc, screenshot_path, output_path, font=None):
     bg = hex_to_rgb(bg_hex)
-    font_path = os.path.join(FONT_ROOT, font)
+    font_path = _resolve_font(font or _DEFAULT_FONT)
 
     # ── 1. Canvas ───────────────────────────────────────────────────
     canvas = Image.new("RGBA", (CANVAS_W, CANVAS_H), (*bg, 255))
@@ -164,14 +213,17 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, font):
 def main():
     p = argparse.ArgumentParser(description="Compose App Store screenshot")
     p.add_argument("--bg", required=True, help="Background hex colour (#E31837)")
-    p.add_argument("--font", help="Font filename in /Library/Fonts (default: SF-Pro-Display-Black.otf)", default=DEFAULT_FONT)
+    p.add_argument("--font", default=None,
+                   help="Font filename or full path. Auto-detected per platform: "
+                        "SF Pro Display Black (macOS), Noto Sans Black (Linux), "
+                        "Arial Bold (Windows)")
     p.add_argument("--verb", required=True, help="Action verb (TRACK)")
     p.add_argument("--desc", required=True, help="Benefit descriptor (TRADING CARD PRICES)")
     p.add_argument("--screenshot", required=True, help="Simulator screenshot path")
     p.add_argument("--output", required=True, help="Output file path")
     args = p.parse_args()
 
-    compose(args.bg, args.verb, args.desc, args.screenshot, args.output, args.font)
+    compose(args.bg, args.verb, args.desc, args.screenshot, args.output, font=args.font)
 
 
 if __name__ == "__main__":

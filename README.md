@@ -97,13 +97,23 @@ python3 -m pip install Pillow
 
 ### 5. Install the screenshot font dependency
 
-The screenshot scaffold renderer uses **SF Pro Display Black** for headline text. On macOS, install it from [Apple's developer fonts](https://developer.apple.com/fonts/). The expected path is:
+The screenshot scaffold renderer auto-detects a suitable headline font per platform:
 
-```text
-/Library/Fonts/SF-Pro-Display-Black.otf
+| Platform | Default font | Install |
+|----------|-------------|---------|
+| **macOS** | SF Pro Display Black | [Apple Developer Fonts](https://developer.apple.com/fonts/) → `/Library/Fonts/SF-Pro-Display-Black.otf` |
+| **Linux** | Noto Sans Black | `sudo apt install fonts-noto-core` (usually pre-installed) |
+| **Windows** | Arial Bold | Pre-installed |
+
+To use a custom font, pass `--font` to `compose.py` with either a filename (searched in platform font dirs) or a full path:
+
+```bash
+# By filename (searched in platform font directories)
+python3 compose.py --font "Inter-Black.otf" ...
+
+# By full path
+python3 compose.py --font "/path/to/CustomFont.otf" ...
 ```
-
-You can also use any custom font installed in `/Library/Fonts/`. The skill will ask which font you'd like during the generation phase. To use a custom font, just provide the filename (e.g., `Inter-Black.otf`, `Montserrat-Black.ttf`).
 
 ### 6. Configure Gemini MCP
 
