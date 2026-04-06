@@ -202,6 +202,7 @@ The `final/` folder contains App Store-ready screenshots at exact Apple dimensio
 | `compose.py` | Deterministic screenshot scaffold generator |
 | `generate_frame.py` | Regenerates the screenshot device frame template |
 | `showcase.py` | Builds the final screenshot showcase image |
+| `resize.py` | Cross-platform screenshot crop/resize (replaces macOS-only sips) |
 | `assets/device_frame.png` | Pre-rendered iPhone frame template |
 | `aso-appstore-icon/SKILL.md` | App-icon skill prompt and workflow |
 | `aso-appstore-icon/agents/openai.yaml` | App-icon skill UI metadata |
@@ -219,6 +220,14 @@ python3 -m py_compile aso-appstore-icon/prepare_icon.py aso-appstore-icon/previe
 python3 -m unittest discover -s tests
 git diff --check
 ```
+=======
+| `SKILL.md` | The skill prompt — defines the multi-phase workflow |
+| `compose.py` | Deterministic scaffold generator (Pillow-based) |
+| `resize.py` | Cross-platform crop and resize to exact store dimensions (Pillow-based) |
+| `generate_frame.py` | Generates the device frame template |
+| `showcase.py` | Generates the side-by-side showcase image |
+| `assets/device_frame.png` | Pre-rendered iPhone device frame template |
+>>>>>>> ff8f773 (Add cross-platform resize.py, keep sips as macOS fallback)
 
 ## License
 
