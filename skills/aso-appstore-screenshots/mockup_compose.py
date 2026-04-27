@@ -178,19 +178,24 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, font=None):
     # ── 4. Canvas ────────────────────────────────────────────────────
     canvas = Image.new("RGBA", (CANVAS_W, CANVAS_H), (*hex_to_rgb(bg_hex), 255))
 
-    # ── 5. Screenshot (cover mode, clipped to screen) ────────────────
+    # ── 5. Screenshot (cover + crop to exact screen area) ────────────
     scale_s = max(sw / shot.width, sh / shot.height)
     shot_w = int(shot.width * scale_s)
     shot_h = int(shot.height * scale_s)
     shot_resized = shot.resize((shot_w, shot_h), Image.LANCZOS)
 
-    # Position: center phone horizontally, position lower on canvas
-    mockup_x = (CANVAS_W - new_w) // 2
-    mockup_y = int(CANVAS_H * 0.22)  # moved up from 0.30, tighter gap to text
+    # Crop to exact screen area dimensions (centered) to avoid gaps
+    crop_left = (shot_w - sw) // 2
+    crop_top = (shot_h - sh) // 2
+    shot_cropped = shot_resized.crop((crop_left, crop_top, crop_left + sw, crop_top + sh))
 
-    # Screenshot paste position (centered in screen area)
-    paste_x = mockup_x + sx + (sw - shot_w) // 2
-    paste_y = mockup_y + sy + (sh - shot_h) // 2
+    # Position: center phone horizontally
+    mockup_x = (CANVAS_W - new_w) // 2
+    mockup_y = int(CANVAS_H * 0.22)
+
+    # Screenshot paste position (exact fit, no centering needed)
+    paste_x = mockup_x + sx
+    paste_y = mockup_y + sy
 
     # Clip screenshot to screen area
     scr_mask = Image.new("L", (CANVAS_W, CANVAS_H), 0)
@@ -199,7 +204,7 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, font=None):
         radius=sr, fill=255
     )
     scr_layer = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
-    scr_layer.paste(shot_resized, (paste_x, paste_y))
+    scr_layer.paste(shot_cropped, (paste_x, paste_y))
     scr_layer.putalpha(scr_mask)
     canvas = Image.alpha_composite(canvas, scr_layer)
 
