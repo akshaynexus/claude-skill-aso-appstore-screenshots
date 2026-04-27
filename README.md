@@ -4,6 +4,13 @@
 
 AI-powered skills for generating App Store & Google Play screenshots and icons. Works with Claude Code, Codex, OpenCode, Cursor, and 40+ agents via [npx skills](https://skills.sh).
 
+Supports **two** image generation backends — pick whichever fits your setup:
+
+| Backend | Setup | Cost | Where it works |
+|---------|-------|------|----------------|
+| **Codex `$imagegen`** (OpenAI) | Zero setup — just install the skill | Included in your Codex subscription | Codex Desktop only (NOT CLI) |
+| **Gemini MCP** (Google) | Requires Gemini API key + MCP setup | Pay-as-you-go API rates per image | Any agent (Claude Code, Codex, OpenCode, Cursor, terminal)
+
 ## Changes from Upstream
 
 | Feature | Description |
@@ -19,7 +26,7 @@ AI-powered skills for generating App Store & Google Play screenshots and icons. 
 
 | Skill | Description |
 |-------|-------------|
-| `aso-appstore-screenshots` | Analyzes app → discovers benefits → pairs screenshots → generates App Store/Google Play images via `compose.py` + Gemini MCP |
+| `aso-appstore-screenshots` | Analyzes app → discovers benefits → pairs screenshots → generates App Store/Google Play images via Codex `$imagegen` or Gemini MCP |
 | `aso-appstore-icon` | Audits icons → drafts directions → generates concepts → normalizes to App Store specs |
 
 ## Install
@@ -57,7 +64,31 @@ ln -s "$(pwd)/skills/aso-appstore-screenshots" "$HOME/.agents/skills/aso-appstor
 ln -s "$(pwd)/skills/aso-appstore-icon" "$HOME/.agents/skills/aso-appstore-icon"
 ```
 
-## Configure Gemini MCP
+## Generation Backends
+
+The skill supports **two** image generation systems. You'll be asked which to use on first run.
+
+### Option 1: Codex `$imagegen` (Zero setup)
+
+> **⚠️ Codex Desktop REQUIRED.** `$imagegen` only works in the **OpenAI Codex Desktop app** (macOS/Windows). Not available in Codex CLI, Claude Code, or any terminal agent.
+
+**Why choose this:**
+- No API keys or MCP configuration needed
+- Uses your existing Codex subscription — no extra cost
+- OpenAI's `gpt-image-2` model handles enhancement directly
+
+**Setup:** Just install the skill. That's it. When the skill runs in Codex Desktop, it invokes `$imagegen` automatically.
+
+### Option 2: Gemini MCP (More flexible, pay-per-use)
+
+**Why choose this:**
+- Works in Claude Code, Codex CLI, OpenCode, Cursor, and any terminal agent
+- Uses Google's Gemini image models for high-quality output
+- Available anywhere an MCP server can run
+
+**Cost:** You pay Google's API rates per image generated (~$0.001-0.02/image depending on model and resolution). Higher quality at higher cost.
+
+#### Setup Instructions
 
 Both skills need the Gemini MCP server. Use the CLI for your agent:
 
@@ -154,7 +185,7 @@ State saved to `.agents/aso-appstore-screenshots/state.json`.
 
 | File | Purpose |
 |------|---------|
-| `skills/aso-appstore-screenshots/` | Screenshot skill (SKILL.md, compose.py, generate_frame.py, showcase.py, resize.py, assets/) |
+| `skills/aso-appstore-screenshots/` | Screenshot skill (SKILL.md, mockup_compose.py, compose.py, generate_frame.py, showcase.py, resize.py, assets/) |
 | `skills/aso-appstore-icon/` | Icon skill (SKILL.md, prepare_icon.py, preview_icons.py) |
 | `CLAUDE.md` | Claude Code guidance |
 | `AGENTS.md` | Engineering guidance |
