@@ -148,6 +148,7 @@ Inspect every local screenshot with the local-image tool available in the curren
 
 - In Codex, use `view_image` and render local images inline with absolute paths when showing options back to the user.
 - In Claude Code, use the local image preview or file-reading workflow available in that runtime.
+- **If the agent cannot analyze images natively** (e.g., the model does not support image input), use the Gemini MCP `analyze_image` tool to describe each screenshot. Pass the screenshot via `filePath` and ask it to describe: 1) What the screen shows, 2) Key UI elements visible, 3) What feature/functionality it demonstrates. Use this analysis to correctly pair screenshots with benefits.
 
 ### Step 2: Assess Each Screenshot
 
@@ -481,26 +482,7 @@ Use only the scaffold as input:
 
 **First screenshot prompt template:**
 
-```
-This is a SCAFFOLD for an App Store screenshot — a rough layout showing the correct text, device frame position, and app screenshot placement. Your job is to transform this into a polished, professional App Store marketing screenshot that would make someone tap Download.
-
-KEEP EXACTLY AS-IS:
-- The headline text (wording, position, and approximate size)
-- The app screenshot shown on the phone screen
-- The background colour
-
-ENHANCE AND POLISH:
-- Replace the placeholder device frame with a photorealistic device mockup — for iOS use an iPhone 15 Pro, for Android use a Google Pixel 8 Pro — sleek, modern, with accurate proportions, reflections, and subtle shadows. The phone should look like a real device, not a flat rectangle. Keep the same position and size as the scaffold.
-- Refine the overall visual quality to look like a professional, high-budget App Store screenshot
-- OPTIONALLY add a PRIMARY breakout element — but ONLY if there is an obvious, visually compelling UI panel on the app screen that directly relates to the benefit headline. If nothing on screen clearly reinforces the headline, skip the breakout entirely — a clean screenshot with no breakout is better than a forced one. When you DO add a breakout, it MUST be an entire UI panel or grouped section (e.g., a complete card with its title and content, a full list section, a complete dialog/sheet) — never individual small elements like a single button, icon, or colour dot. IMPORTANT: The panel must stay at the SAME vertical position and orientation as where it appears on screen — do NOT rotate or angle it. The panel must be SCALED UP significantly — rendered much larger than it appears on the phone screen — so that it extends dramatically beyond BOTH left and right edges of the device frame, clearly overlapping the phone bezel on both sides, expanding to nearly the full screenshot width. Do NOT keep the panel at its original on-screen size with just padding added around it. The panel itself must be enlarged. It should appear to float in front of the device at this larger scale — add a soft drop shadow beneath it to create depth and sell the hovering effect. The panel must look like it came from the app — same colours, same style, same content. Do NOT invent new elements.
-[PRIMARY BREAKOUT — if a relevant panel is obvious, describe the specific UI panel visible on screen and instruct it to extend beyond both left and right edges of the device frame with a drop shadow, e.g., "The [panel name] card/row extends beyond both left and right edges of the device frame, overlapping the phone bezel on both sides, expanding to nearly the full screenshot width. It floats in front of the device with a soft drop shadow beneath it." If no panel clearly relates to the headline, write "No breakout — the app screen speaks for itself."]
-- Optionally add 1-2 secondary elements that reinforce the benefit and message of the screenshot — the kind of enhancements a professional graphic designer would add for impact. These are NOT from the app UI; they are creative additions that help clearly communicate what the screenshot is trying to portray to the user browsing the App Store. They should carry the message and support ASO conversion, but never at the cost of the overall design aesthetic. They must not compete with the primary breakout for attention.
-[SECONDARY ELEMENTS (optional) — describe 0-2 small supporting elements that tell the story, or "None needed"]
-- The background should be a clean, solid brand colour. Do NOT add glows, gradients, radial patterns, or light effects to the background. Keep it flat and bold.
-- Ensure the text is crisp, bold, and highly readable
-
-The final result should look like it was designed by a professional App Store screenshot agency — polished, high-converting, and visually striking. No watermarks, no extra text, no app store UI chrome.
-```
+See `styles/dark_gradient_prompt.md` for the base enhancement prompt. Customize the `[BREAKOUT]` placeholder with the specific UI card for this benefit.
 
 #### Subsequent screenshots (after first is approved)
 
@@ -511,25 +493,29 @@ Use **two images** as input:
 **Subsequent screenshot prompt template:**
 
 ```
-You are creating the next screenshot in an App Store screenshot SET. It must look like it belongs to the same series as the style reference.
+You are creating the next screenshot in an App Store screenshot SET. It must match the style reference exactly.
 
-TWO REFERENCE IMAGES:
-- FIRST image: The SCAFFOLD — use this as the definitive guide for layout: headline text wording/position, device frame placement, and the app screenshot on screen. This defines WHAT this screenshot shows.
-- SECOND image: The STYLE TEMPLATE — this is an already-approved screenshot from the same set. Match its visual style EXACTLY: same device frame rendering (this is critical — the phone must look identical), same text treatment, same background style/accents, same level of polish, same overall aesthetic. This defines HOW this screenshot should look. When in doubt, copy the style template more closely rather than less.
+TWO IMAGES:
+- FIRST image: The SCAFFOLD — layout reference. Shows the headline text and iPhone mockup with app screenshot inside. Use this for WHERE everything goes.
+- SECOND image: The STYLE TEMPLATE — visual reference. Match its dark gradient background, cyan glow, vignette, phone shadow, and overall aesthetic exactly.
 
-REQUIREMENTS:
-- CRITICAL: The device frame MUST match the style template EXACTLY — same photorealistic iPhone rendering, same size, same position, same shadows, same reflections, same edge treatment. Do NOT reinvent or reimagine the device frame. Reproduce it as closely as possible from the style template, only changing the screen contents.
-- Match the style template's text rendering style (same font treatment, same crispness, same visual weight)
-- Match the style template's background — clean, solid brand colour. Do NOT add glows, gradients, radial patterns, or light effects.
-- Use the scaffold's layout for positioning (text, device, screenshot placement)
-- OPTIONALLY add a PRIMARY breakout element — but ONLY if there is an obvious, visually compelling UI panel on the app screen that directly relates to the benefit headline. If nothing clearly reinforces the headline, skip the breakout entirely. When used, it MUST be an entire UI panel or grouped section (NOT individual small elements like a single button or icon). The panel must stay at the SAME vertical position and orientation as on screen — do NOT rotate or angle it. The panel must be SCALED UP significantly — rendered much larger than it appears on the phone screen — so that it extends dramatically beyond BOTH left and right edges of the device frame, clearly overlapping the phone bezel on both sides, expanding to nearly the full width of the screenshot canvas. Do NOT keep the panel at its original on-screen size. The panel itself must be enlarged. It should appear to float in front of the device at this larger scale — add a soft drop shadow beneath it to create depth. The panel MUST come from the app screenshot — same colours, same style, same content. Do NOT invent new elements.
-[PRIMARY BREAKOUT — if a relevant panel is obvious, describe the specific UI panel visible on screen to pop out with a drop shadow, extending beyond both device frame edges. Otherwise write "No breakout — the app screen speaks for itself."]
-- Optionally add 1-2 secondary elements that reinforce the benefit and message of the screenshot — the kind of enhancements a professional graphic designer would add for impact. These are NOT from the app UI; they are creative additions that help clearly communicate what the screenshot is trying to portray to the user browsing the App Store. They should carry the message and support ASO conversion, but never at the cost of the overall design aesthetic. They must not compete with the primary breakout for attention.
-[SECONDARY ELEMENTS (optional) — 0-2 small supporting elements that tell the story, or "None needed"]
-- The breakout elements should match the style and energy level of those in the style template
+DO NOT TOUCH:
+- The headline text from the scaffold — keep all text exactly as is, same font, same size, same position
+- The iPhone device frame — keep exactly as is
+- The app screenshot inside the phone — keep exactly as is, do not redraw or alter
 
-The result must look like it was designed alongside the style template as part of the same professional set. When placed side-by-side in the App Store, they should be visually cohesive — same quality, same aesthetic, same design language, just different content.
+MATCH FROM STYLE TEMPLATE:
+- Dark gradient background (near-black to teal)
+- Radial cyan glow behind the phone
+- Black vignette at top and bottom
+- Phone drop shadow
+- Text shadow for legibility
 
+OPTIONAL — ONE BREAKOUT ELEMENT:
+[BREAKOUT — describe the specific UI card to extract, or write "No breakout needed."]
+
+Style: Clean, minimal, premium dark-mode. Less is more.
+No sparkles, no floating icons, no particles, no extra decorative elements.
 No watermarks, no extra text, no app store UI chrome.
 ```
 
