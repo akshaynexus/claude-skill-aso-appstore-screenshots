@@ -37,18 +37,18 @@ Installs to all detected agents in one command:
 
 ```bash
 # Install both skills to all agents (project scope)
-npx skills add akshaynexus/claude-skill-aso-appstore-screenshots
+npx skills add akshaynexus/aso-appstore-screenshots
 
 # Specific agent
-npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a claude-code
-npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a codex
-npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a opencode
+npx skills add akshaynexus/aso-appstore-screenshots -a claude-code
+npx skills add akshaynexus/aso-appstore-screenshots -a codex
+npx skills add akshaynexus/aso-appstore-screenshots -a opencode
 
 # Global (all projects)
-npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -g
+npx skills add akshaynexus/aso-appstore-screenshots -g
 
 # Non-interactive
-npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -y
+npx skills add akshaynexus/aso-appstore-screenshots -y
 ```
 
 ### Manual (alternative)
