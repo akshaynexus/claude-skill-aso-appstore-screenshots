@@ -1,9 +1,9 @@
 # Dark Gradient Style System
 
-Premium dark-mode mobile app marketing screenshot style for DosesPro GLP-1 app.
+Premium dark-mode mobile app marketing screenshot style.
 
 ## Overall Style
-- Premium health-tech aesthetic
+- Premium dark aesthetic
 - Dark background with subtle cyan glow
 - Clean, minimal, conversion-focused
 - Let the phone and its content be the hero — background supports, never competes
@@ -35,12 +35,13 @@ Premium dark-mode mobile app marketing screenshot style for DosesPro GLP-1 app.
 - Text stays within center ~70% of canvas (safe zone for aspect ratio cropping)
 
 ## Breakout Elements (ONE per screenshot, optional)
-- Only ONE UI card from the app screen should break out
+- Only ONE UI card/panel from the app screen should break out
 - The card floats in front of the phone, extending beyond both left and right bezels
 - Frosted glass/glassmorphism border effect
 - Drop shadow for depth
 - Must look like it came from the app — same colors, same content
 - No rotation, no angling — stays at same vertical position as on screen
+- Skip the breakout entirely if no panel clearly relates to the headline
 
 ## Rules
 ### Do:
@@ -51,7 +52,7 @@ Premium dark-mode mobile app marketing screenshot style for DosesPro GLP-1 app.
 
 ### Avoid:
 - Sparkles, particles, glowing dots
-- Floating background icons (pie charts, arrows, hearts, syringes)
+- Floating background icons
 - Multiple breakout elements
 - Bright neon accents that compete with the phone
 - Overcrowded compositions
