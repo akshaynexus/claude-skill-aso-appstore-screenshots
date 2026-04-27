@@ -1,6 +1,6 @@
 ---
 name: aso-appstore-screenshots
-description: Generate high-converting App Store and Google Play screenshots by analyzing your app's codebase, discovering core benefits, and creating ASO-optimized screenshot images using compose.py and Gemini MCP.
+description: Generate high-converting App Store and Google Play screenshots by analyzing your app's codebase, discovering core benefits, and creating ASO-optimized screenshot images using mockup_compose.py and Gemini MCP.
 ---
 
 You are an expert App Store Optimization (ASO) consultant and screenshot designer. Your job is to help the user create high-converting App Store and Google Play Store screenshots for their app.
@@ -272,7 +272,7 @@ Google Play accepts screenshots between 320px and 3840px on any side, with a max
 
 Default to **1080 x 2400px** for Android phone (modern 20:9 aspect ratio). Up to 8 screenshots per listing.
 
-**For Android**, compose.py outputs 1080×2400 which is narrower than 9:16, so the post-processing crop/resize step trims similarly to iOS.
+**For Android**, mockup_compose.py outputs 1080×2400 which is narrower than 9:16, so the post-processing crop/resize step trims similarly to iOS.
 
 ### Screenshot Format Specification
 
@@ -308,7 +308,7 @@ Breakout elements can give screenshots personality and make them feel dynamic. B
 ### Generation Process — Two-Stage: Scaffold then Enhance
 
 Generation uses a two-stage approach for consistency:
-1. **Stage 1 (Scaffold)**: compose.py creates a deterministic local image with the correct text, device frame, and screenshot. This guarantees consistent layout across all screenshots.
+1. **Stage 1 (Scaffold)**: mockup_compose.py creates a deterministic local image with the correct text, device frame, and screenshot. This guarantees consistent layout across all screenshots.
 2. **Stage 2 (Enhance)**: The scaffold is sent to Nano Banana Pro to add breakout elements, depth, and visual polish.
 
 **The first approved screenshot becomes the style template for the entire set.** All subsequent screenshots are enhanced using both their own scaffold (for layout) AND the first approved screenshot (for style). This ensures every screenshot in the set has the same device frame rendering, text treatment, background style, and overall visual quality — so when viewed side-by-side in the App Store, they look like a cohesive professional set.
@@ -335,7 +335,7 @@ If the user wants a different font, they can provide a filename (e.g., `Inter-Bl
 
 If the user says "default" or doesn't have a preference, omit the `--font` flag — the script picks the right font automatically based on device type.
 
-**Step 2: Create the scaffold with compose.py**
+**Step 2: Create the scaffold with mockup_compose.py**
 
 The skill can live in a Codex or Claude Code skill discovery directory. Resolve it from the runtime-specific or shared locations. Set up a venv and install Pillow if not already done:
 
@@ -365,7 +365,7 @@ fi
 VENV_PYTHON="$SKILL_DIR/.venv/bin/python3"
 ```
 
-The compose.py script lives in the skill directory. Run it to create the deterministic base screenshot. If the user chose a custom font, pass `--font "filename.otf"` to each compose.py call. If using the default, omit `--font`.
+The mockup_compose.py script lives in the skill directory. Run it to create the deterministic base screenshot. If the user chose a custom font, pass `--font "filename.otf"` to each mockup_compose.py call. If using the default, omit `--font`.
 
 **IMPORTANT — Batch all 3 scaffolds into a single Bash call** to minimize permission prompts. Chain the commands with `&&` so the user only needs to approve once:
 
@@ -388,19 +388,19 @@ else
 fi
 DEVICE="iphone-6.7" && \
 mkdir -p screenshots/01-[benefit-slug] screenshots/02-[benefit-slug] screenshots/03-[benefit-slug] && \
-$VENV_PYTHON "$SKILL_DIR/compose.py" \
+$VENV_PYTHON "$SKILL_DIR/mockup_compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 1]" --desc "[DESC 1]" \
   --font "[FONT_FILE or omit flag]" \
   --screenshot [path/to/screenshot-1.png] \
   --device $DEVICE \
   --output screenshots/01-[benefit-slug]/scaffold.png && \
-$VENV_PYTHON "$SKILL_DIR/compose.py" \
+$VENV_PYTHON "$SKILL_DIR/mockup_compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 2]" --desc "[DESC 2]" \
   --font "[FONT_FILE or omit flag]" \
   --screenshot [path/to/screenshot-2.png] \
   --device $DEVICE \
   --output screenshots/02-[benefit-slug]/scaffold.png && \
-$VENV_PYTHON "$SKILL_DIR/compose.py" \
+$VENV_PYTHON "$SKILL_DIR/mockup_compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 3]" --desc "[DESC 3]" \
   --font "[FONT_FILE or omit flag]" \
   --screenshot [path/to/screenshot-3.png] \
@@ -432,11 +432,11 @@ For each of the 3 calls, use:
   - `./screenshots/01-[benefit-slug]/v2.jpg`
   - `./screenshots/01-[benefit-slug]/v3.jpg`
 
-#### Direct Nano Banana — LAST RESORT ONLY (skip compose.py scaffold)
+#### Direct Nano Banana — LAST RESORT ONLY (skip mockup_compose.py scaffold)
 
 > **⚠️ DO NOT USE THIS BY DEFAULT. Only use when the user explicitly says "skip scaffolding" or "use direct Nano Banana".**
 >
-> **Why the scaffold is preferred:** compose.py guarantees pixel-perfect headline text and preserves the exact simulator screenshot content. Nano Banana (`generate_image`) re-renders the text from scratch (often producing blurry or incorrect text) and may alter the phone screen content (inventing UI, changing colors, removing data). The two-stage scaffold → enhancement approach avoids both problems.
+> **Why the scaffold is preferred:** mockup_compose.py guarantees pixel-perfect headline text and preserves the exact simulator screenshot content. Nano Banana (`generate_image`) re-renders the text from scratch (often producing blurry or incorrect text) and may alter the phone screen content (inventing UI, changing colors, removing data). The two-stage scaffold → enhancement approach avoids both problems.
 >
 > **When to use this:** Only when the user explicitly requests to skip the scaffold step.
 
@@ -620,7 +620,7 @@ This keeps `final/` clean — only approved, App Store-ready screenshots, one pe
 ```
 screenshots/
   01-track-card-prices/       ← working versions for benefit 1
-    scaffold.png              ← deterministic compose.py output (text + frame + screenshot)
+    scaffold.png              ← deterministic mockup_compose.py output (text + frame + screenshot)
     v1.jpg                    ← Nano Banana enhanced version 1
     v1-resized.jpg            ← cropped/resized to App Store dimensions
     v2.jpg
