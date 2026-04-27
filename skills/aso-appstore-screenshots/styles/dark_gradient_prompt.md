@@ -1,115 +1,77 @@
-# Dark Gradient Style — Prompt Template
+# Dark Gradient Style — Prompt Templates
 
-Use this template when generating screenshots with the Direct Nano Banana approach.
+## Font Guidance
+
+| Platform | Verb (line 1) | Descriptor (line 2) |
+|----------|--------------|---------------------|
+| **iOS** | SF Pro Display Black (`SFCompact.ttf`) | SF Pro Text Regular (`SFNS.ttf`) |
+| **Android** | Roboto Black (`Roboto-Black.ttf`) | Roboto Regular (`Roboto-Regular.ttf`) |
+
+The scaffold handles typography automatically via `mockup_compose.py`. Nano Banana should NOT redraw or alter the text.
+
+---
+
+## Enhancement Prompt (Two-Stage — Scaffold → edit_image)
+
+Use this when enhancing a compose.py scaffold with Nano Banana `edit_image`. The scaffold already has correct text, device frame, and screenshot. Nano Banana only adds background styling and optional breakout elements.
+
+### Base Prompt (copy and customize per screenshot)
 
 ```
-Create a premium dark-mode App Store marketing screenshot for a [APP TYPE] app called [APP NAME].
+This is a SCAFFOLD for an App Store screenshot. Your job is to add background styling and ONE optional breakout element. Do NOT change anything else.
 
-STYLE REFERENCE — Dark Gradient Style:
-- Futuristic premium health-tech aesthetic
-- Dark glassmorphism UI with neon cyan/teal highlights
-- High-contrast near-black #090D0F and charcoal #101719 background
-- Primary accent: bright cyan #00CDEB
-- Secondary accent: mint/green #00F0A8
-- Text: pure white for headlines
+DO NOT TOUCH:
+- The headline text — keep all text exactly as it is, same font, same size, same position
+- The iPhone device frame — keep exactly as is
+- The app screenshot inside the phone — keep exactly as is, do not redraw, alter, or add to the screen content
 
-BACKGROUND:
-- Dark gradient blending near-black #090D0F, charcoal #101719, and dark teal #062B2B
-- Large abstract curved ribbon shapes / loop strokes in dark teal with low opacity
-- Soft radial cyan glow behind the phone mockup
-- Vignette darkening at the edges
-- Background should feel dimensional but not busy
+ADD THESE:
+- Dark gradient background: near-black #080808 blending to dark teal #0A1A1D
+- Soft radial cyan glow (#10D6E6) behind the phone — subtle, not overpowering
+- Black vignette at top and bottom edges
+- Soft drop shadow behind the phone
 
-PHONE MOCKUP:
-- Place the input simulator screenshot inside a photorealistic iPhone 15 Pro mockup with Dynamic Island
-- Phone must be centered on canvas, positioned high
-- The screenshot content MUST fit PERFECTLY inside the phone screen — no cropping, no distortion
-- Add subtle shadow and cyan glow behind the device
-- Phone bottom can crop off the canvas edge for dramatic depth
-- Phone can overlap with headline area slightly
+OPTIONAL — ONE BREAKOUT ELEMENT (only if it reinforces the headline):
+[BREAKOUT — describe the specific UI card to extract, or write "No breakout needed"]
 
-TYPOGRAPHY:
-- Large bold white headline "[VERB]" stacked above "[DESCRIPTOR]" at the top
-- Use SF Pro Black or Inter Black weight
-- Headlines should be stacked across 2 lines
-- Keep text within the center ~70% of canvas width (safe zone)
-- Subtitle below if needed (smaller, light gray)
-
-BREAKOUT ELEMENTS (optional — only when relevant):
-- Key UI CARDS/STATS can pop out from the phone screen, extending beyond left and right edges of the device frame with a soft drop shadow
-- The card must stay at the same vertical position as shown on screen
-- Scale the card up so it overlaps both bezels
-- The card must look like it came from the app — same colors, same content
-
-IMPORTANT — NAVBAR STAYS INSIDE:
-- The bottom navigation bar must REMAIN INSIDE the phone screen
-- Do NOT break out, extend, or move the navigation bar outside the device frame
-- The navbar is part of the phone UI and should stay contained within the screen area
-
-SECONDARY ELEMENTS (optional):
-- 1-2 small subtle icons or accent elements in background corners (cyan colored)
-- These reinforce the feature theme but don't compete with the phone or headline
-
-FINAL REQUIREMENTS:
-- Clean, polished, conversion-focused design
-- Every screen should feel part of the same brand system
-- No watermarks, no extra text, no app store UI chrome
-- The phone content must be recognizable from the original simulator screenshot
+Style: Clean, minimal, premium dark-mode. Less is more. The phone and text are the heroes.
+No sparkles, no floating icons, no particles, no extra decorative elements.
 ```
 
-## Example Prompts by Benefit
+### Per-Screenshot Breakout Descriptions
 
-### 1. FORECAST YOUR WEIGHT LOSS
+#### 1. FORECAST YOUR WEIGHT LOSS
 ```
-... [base template] ...
-
-BREAKOUT ELEMENTS:
-- The weight trend chart card (with Forecast/Injections/Phases buttons and the colored chart) can break out from the phone — extending beyond left and right bezels with drop shadow
-
-SECONDARY ELEMENTS:
-- Subtle upward trend arrow or chart icon in background corner (cyan)
+BREAKOUT: The weight trend chart card (showing forecast line, dosage phase colors, target line) — extract from the phone screen and float it in front, extending beyond both left and right edges of the device frame, with subtle drop shadow. Frosted glass border effect.
 ```
 
-### 2. MANAGE PEN INVENTORY
+#### 2. MANAGE PEN INVENTORY
 ```
-... [base template] ...
-
-BREAKOUT ELEMENTS:
-- The "Current Progress 15 mg" card with pen inventory (1/4 dose, 5/8 doses, 2 pens) can break out from the phone — extending beyond left and right bezels with drop shadow
-
-SECONDARY ELEMENTS:
-- Subtle pill/pen icon in background corner (cyan)
+BREAKOUT: The "Current Progress 15 mg" card with pen inventory (1/4 dose, 5/8 doses, 2 pens) — extract and float in front, extending beyond both edges, drop shadow. Frosted glass border.
 ```
 
-### 3. TRACK EVERY INJECTION
+#### 3. TRACK EVERY INJECTION
 ```
-... [base template] ...
-
-BREAKOUT ELEMENTS:
-- The medication level chart (teal waveform showing 11.016 mg) can break out from the phone — extending beyond left and right bezels with drop shadow
-
-SECONDARY ELEMENTS:
-- Subtle syringe/medical icon in background corner (cyan)
+BREAKOUT: The medication concentration chart (teal waveform showing current level) — extract and float in front, extending beyond both edges, drop shadow.
 ```
 
-### 4. REACH YOUR GOALS
+#### 4. REACH YOUR GOALS
 ```
-... [base template] ...
-
-BREAKOUT ELEMENTS:
-- The "Progress Towards Goal" card with 42% progress circle and stats can break out from the phone — extending beyond left and right bezels with drop shadow
-
-SECONDARY ELEMENTS:
-- Subtle target icon in background corner (cyan)
+BREAKOUT: The "Progress Towards Goal" card with 42% progress circle and stats (Lost: 20.1 kg, To Goal: 28.9 kg) — extract and float in front, extending beyond both edges, drop shadow. Frosted glass border.
 ```
 
-### 5. LOG SIDE EFFECTS
+#### 5. LOG SIDE EFFECTS
 ```
-... [base template] ...
-
-BREAKOUT ELEMENTS:
-- The "Most Common Effects" section with colored badges (yellow Food Noise, purple Injection Site Reaction) can break out from the phone — extending beyond left and right bezels with drop shadow
-
-SECONDARY ELEMENTS:
-- Subtle heart/health icon in background corner (cyan)
+BREAKOUT: The "Most Common Effects" section with colored badges (yellow Food Noise, purple Injection Site Reaction) — extract and float in front, extending beyond both edges, drop shadow.
 ```
+
+---
+
+## Style Reference Values
+
+- **Background dark**: `#080808`
+- **Background teal**: `#0A1A1D`
+- **Accent cyan**: `#10D6E6`
+- **Accent glow intensity**: Soft, not neon-bright
+- **Vignette**: Heavy black at top/bottom 10%
+- **Phone shadow**: 50% opacity black, 50px blur
