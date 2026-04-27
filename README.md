@@ -46,43 +46,59 @@ The app-icon skill:
 
 Both skills live under the [`skills/`](skills/) directory following the [npx skills](https://skills.sh) convention.
 
-### Install with npx skills (recommended)
+### Option 1: Install with npx skills CLI (recommended)
 
-The fastest way to install across any agent (Claude Code, Codex, OpenCode, Cursor, and 40+ more):
+[![npx skills](https://img.shields.io/badge/npm-skills_cli-blue)](https://skills.sh)
+
+The `npx skills` CLI handles installation to **all detected agents** in one command. It auto-detects which coding agents you have installed (Claude Code, Codex, OpenCode, Cursor, Cline, and 40+ more) and installs skills to the correct paths.
 
 ```bash
-# Install all skills to all detected agents (project scope)
+# Install all skills to all detected agents (project scope — committed to repo)
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots
 
-# Install to specific agents
+# Install to a specific agent only
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a claude-code
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a codex
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a opencode
 
-# Install globally (available across all projects)
+# Install globally (available across all your projects)
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -g
 
-# List available skills
+# Non-interactive (skip all prompts)
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -y
+
+# List available skills before installing
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots --list
 ```
 
-### 1. Install the screenshot skill for Codex
+**Scope**: Project (default) installs to `./.agents/skills/`, `./.claude/skills/`, etc. in your repo. Global (`-g`) installs to `~/`.
 
-Codex discovers user skills from `~/.agents/skills/` and project skills from `.agents/skills/`.
+**Installation method**: By default, `npx skills` creates symlinks from each agent directory to a canonical copy — single source of truth, easy to update. Use `--copy` for independent copies if symlinks aren't supported.
 
-In-place development symlink:
+**What gets installed**: Both `aso-appstore-screenshots` and `aso-appstore-icon` are detected and installed automatically.
+
+#### Quick start for a specific agent
 
 ```bash
-mkdir -p "$HOME/.agents/skills"
-rm -f "$HOME/.agents/skills/aso-appstore-screenshots"
-ln -s "$(pwd)/skills/aso-appstore-screenshots" "$HOME/.agents/skills/aso-appstore-screenshots"
+# Claude Code — project scope
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a claude-code
+
+# Codex — global
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a codex -g
+
+# OpenCode — project scope
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a opencode
 ```
 
-### 2. Install the screenshot skill for Claude Code
+After installation, restart your agent to pick up the new skills.
 
-Claude Code discovers user skills from `~/.claude/skills/` and project skills from `.claude/skills/`.
+---
 
-In-place development symlink:
+### Option 2: Manual install (alternative)
+
+If you prefer not to use `npx skills`, you can symlink the skill directories directly.
+
+#### Screenshot skill — Claude Code
 
 ```bash
 mkdir -p "$HOME/.claude/skills"
@@ -90,11 +106,15 @@ rm -f "$HOME/.claude/skills/aso-appstore-screenshots"
 ln -s "$(pwd)/skills/aso-appstore-screenshots" "$HOME/.claude/skills/aso-appstore-screenshots"
 ```
 
-If you prefer a project-local install inside a consuming app repository, use `.claude/skills/aso-appstore-screenshots`.
+#### Screenshot skill — Codex / OpenCode
 
-### 3. Install the app-icon skill
+```bash
+mkdir -p "$HOME/.agents/skills"
+rm -f "$HOME/.agents/skills/aso-appstore-screenshots"
+ln -s "$(pwd)/skills/aso-appstore-screenshots" "$HOME/.agents/skills/aso-appstore-screenshots"
+```
 
-In-place development symlink:
+#### Icon skill — any agent
 
 ```bash
 mkdir -p "$HOME/.agents/skills"
@@ -102,15 +122,19 @@ rm -f "$HOME/.agents/skills/aso-appstore-icon"
 ln -s "$(pwd)/skills/aso-appstore-icon" "$HOME/.agents/skills/aso-appstore-icon"
 ```
 
-If you are installing into a consuming app repository instead of your global user skills directory, use:
+#### Project-local install (inside a consuming app repo)
 
-- `.agents/skills/aso-appstore-screenshots` for the screenshot skill
-- `.claude/skills/aso-appstore-screenshots` for the screenshot skill in Claude Code
-- `.agents/skills/aso-appstore-icon` for the icon skill
+Copy or symlink into your app's skill directories:
 
-Restart Codex or Claude Code after installing or updating a skill.
+- `.agents/skills/aso-appstore-screenshots` — Codex / OpenCode
+- `.claude/skills/aso-appstore-screenshots` — Claude Code
+- `.agents/skills/aso-appstore-icon` — Icon skill (any agent)
 
-### 4. Install Python dependencies
+Restart your agent after installing.
+
+---
+
+### 3. Install Python dependencies
 
 Both skills use Pillow-based local helpers:
 
@@ -118,7 +142,7 @@ Both skills use Pillow-based local helpers:
 python3 -m pip install Pillow
 ```
 
-### 5. Install the screenshot font dependency
+### 4. Install the screenshot font dependency
 
 The screenshot scaffold renderer auto-detects a suitable headline font per platform:
 
@@ -132,13 +156,13 @@ To use a custom font, pass `--font` to `compose.py` with either a filename (sear
 
 ```bash
 # By filename (searched in platform font directories)
-python3 compose.py --font "Inter-Black.otf" ...
+python3 skills/aso-appstore-screenshots/compose.py --font "Inter-Black.otf" ...
 
 # By full path
-python3 compose.py --font "/path/to/CustomFont.otf" ...
+python3 skills/aso-appstore-screenshots/compose.py --font "/path/to/CustomFont.otf" ...
 ```
 
-### 6. Configure Gemini MCP
+### 5. Configure Gemini MCP
 
 Both skills use Gemini as the generation and editing backend.
 
