@@ -75,7 +75,7 @@ Codex discovers user skills from `~/.agents/skills/` and project skills from `.a
 Global install:
 
 ```bash
-codex skill install adamlyttleapps/claude-skill-aso-appstore-screenshots
+codex skill install akshaynexus/claude-skill-aso-appstore-screenshots
 ```
 
 In-place development symlink:
@@ -103,7 +103,7 @@ If you prefer a project-local install inside a consuming app repository, use `.c
 ### 3. Install the app-icon skill for Codex
 
 ```bash
-codex skill install adamlyttleapps/claude-skill-aso-appstore-screenshots/aso-appstore-icon
+codex skill install akshaynexus/claude-skill-aso-appstore-screenshots/aso-appstore-icon
 ```
 
 In-place development symlink:
