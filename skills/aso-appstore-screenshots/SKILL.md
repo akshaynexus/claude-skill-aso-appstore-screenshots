@@ -227,9 +227,39 @@ This is critical for resumability. If the user comes back in a new conversation,
 
 ## GENERATION
 
-Once benefits and screenshot pairings are confirmed, generate the final App Store screenshots using Nano Banana Pro (via the Gemini MCP server).
+Once benefits and screenshot pairings are confirmed, generate the final App Store screenshots.
 
-### Prerequisites Check
+### Choose Generation Tool (Ask User on First Run)
+
+**IMPORTANT — On FIRST run only** (no generation tool saved in state), ask the user which tool they want to use:
+
+```
+Which image generation tool do you want to use?
+
+1. **Gemini MCP** (Recommended) — Works in Claude Code, Codex CLI, and any terminal.
+   Uses Nano Banana Pro for high-quality App Store screenshots.
+
+2. **OpenAI Codex `$imagegen`** — Works ONLY in the Codex Desktop app.
+   NOT available in Codex CLI. Uses `gpt-image-2` model.
+
+Recommendation: Use option 1 (Gemini MCP) unless you're in the Codex Desktop app.
+```
+
+After the user picks, save their choice to the state JSON:
+
+```json
+{
+  "generation_tool": "gemini"  // or "codex-imagegen"
+}
+```
+
+On subsequent runs, use the saved tool automatically — don't re-ask.
+
+---
+
+### If User Chose: Gemini MCP
+
+#### Prerequisites Check
 
 Before generating, verify the Gemini MCP server is available by checking that the `generate_image` tool exists. If it is NOT available, tell the user:
 
@@ -246,7 +276,54 @@ See: https://github.com/houtini-ai/gemini-mcp for setup instructions.
 
 Do NOT proceed with generation if the tool is unavailable.
 
-### Platform & Dimensions
+---
+
+### If User Chose: Codex `$imagegen`
+
+> **⚠️ Codex Desktop REQUIRED.** `$imagegen` only works in the **OpenAI Codex Desktop app** (macOS/Windows). It does NOT work in Codex CLI, Claude Code, or any terminal-based agent.
+
+When generating screenshots with Codex imagegen, follow these rules:
+
+1. **Scaffold step is the same** — use `mockup_compose.py` to create the scaffold, then pass it to imagegen as a reference image.
+2. **Invoke `$imagegen` explicitly** in the prompt — Codex needs to see this trigger.
+3. **Use the Codex prompt templates** from `codex_imagegen_prompt.md`.
+4. **Dimensions**: Same as Gemini — generate at a wider aspect ratio, then crop/resize to exact App Store dimensions.
+
+#### Codex imagegen invocation format:
+
+```txt
+$imagegen edit the attached scaffold into a premium dark-mode App Store marketing screenshot.
+
+Goal:
+Convert an App Store screenshot scaffold (headline + iPhone mockup + app screenshot) into a polished App Store listing image.
+
+Output:
+- Save as screenshots/[slug]/v1.jpg, v2.jpg, v3.jpg
+
+Style:
+Premium dark-mode, atmospheric depth, subtle abstract shapes in background, soft glow behind phone, vignette edges, drop shadow on phone. Minimal, clean, professional.
+
+Guidelines:
+- DO NOT alter the headline text, iPhone frame, or app screenshot content
+- Add dark gradient background, subtle geometric elements, particles
+- Match the scaffold layout exactly — text position, phone position must remain unchanged
+- No sparkles, no neon, no extra text, no watermarks
+
+Avoid:
+Altering text, moving the phone, changing the screenshot content, adding fake UI, adding logos or extra branding.
+```
+
+#### Batch generation:
+
+Generate all 3 versions per screenshot in one invocation:
+
+```txt
+$imagegen edit the attached scaffold into 3 variations of a premium dark-mode App Store screenshot. Vary the background abstract shapes and glow intensity slightly across versions. Save as v1.jpg, v2.jpg, v3.jpg. All other rules same as above.
+```
+
+---
+
+### Shared: Platform & Dimensions
 
 #### iOS — App Store Connect
 
