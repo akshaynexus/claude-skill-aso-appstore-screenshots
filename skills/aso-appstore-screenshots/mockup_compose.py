@@ -17,11 +17,10 @@ MOCKUP_PATH = os.path.join(SKILL_DIR, "assets", "iPhone_17_Mockup_5.png")
 
 CANVAS_W, CANVAS_H = 1290, 2796
 
-# Screen area in the native mockup (1161x2387) — detected by Gemini
-# Slightly adjusted to account for rounded corners matching the bezel
-SCREEN_X, SCREEN_Y = 40, 40
-SCREEN_W, SCREEN_H = 1080, 2306
-SCREEN_CORNER_R = 125
+# Exact screen area in the native mockup (1161x2387) — measured by Gemini
+SCREEN_X, SCREEN_Y = 44, 44
+SCREEN_W, SCREEN_H = 1073, 2299
+SCREEN_CORNER_R = 136
 
 # Dynamic Island
 ISLAND_X, ISLAND_Y = 428, 75
@@ -147,9 +146,10 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, font=None):
     # ── 1. Color-shift frame from orange to black ────────────────────
     mockup = color_shift_to_black(mockup)
 
-    # ── 2. Scale mockup so entire phone fits in canvas ───────────────
-    # Phone needs ~85% of canvas height to fit with padding
-    target_h = int(CANVAS_H * 0.78)
+    # ── 2. Scale mockup so phone is 20% smaller ────────────────────────
+    # Phone needs ~62% of canvas height (20% smaller than original 78%)
+    # Then scaled down an additional 17% for proper sizing: 78% * 0.83 * 1.17 = 75.7% ≈ 76%
+    target_h = int(CANVAS_H * 0.76)
     scale = target_h / mockup.size[1]
     new_w = int(mockup.size[0] * scale)
     new_h = int(mockup.size[1] * scale)
@@ -184,9 +184,9 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, font=None):
     shot_h = int(shot.height * scale_s)
     shot_resized = shot.resize((shot_w, shot_h), Image.LANCZOS)
 
-    # Position: center phone horizontally, place in upper portion
+    # Position: center phone horizontally, position lower on canvas
     mockup_x = (CANVAS_W - new_w) // 2
-    mockup_y = int(CANVAS_H * 0.18)  # leave room for text at top
+    mockup_y = int(CANVAS_H * 0.22)  # moved up from 0.30, tighter gap to text
 
     # Screenshot paste position (centered in screen area)
     paste_x = mockup_x + sx + (sw - shot_w) // 2
@@ -276,7 +276,7 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, font=None):
             pass
         desc_font = ImageFont.truetype(desc_fp, desc_size, index=desc_idx)
 
-    text_top = int(CANVAS_H * 0.04)
+    text_top = int(CANVAS_H * 0.080)
     y = text_top
     y = draw_centered(draw, y, verb.upper(), verb_font, CANVAS_W)
     y += VERB_DESC_GAP
