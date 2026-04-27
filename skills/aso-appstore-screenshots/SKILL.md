@@ -421,20 +421,23 @@ For each of the 3 calls, use:
   - `./screenshots/01-[benefit-slug]/v2.jpg`
   - `./screenshots/01-[benefit-slug]/v3.jpg`
 
-#### Alternative: Direct Nano Banana (skip compose.py)
+#### Direct Nano Banana — LAST RESORT ONLY (skip compose.py scaffold)
 
-If the scaffold's device frame doesn't properly fit the simulator screenshot (e.g., newer iPhone resolutions), use this approach instead:
+> **⚠️ DO NOT USE THIS BY DEFAULT. Only use when the user explicitly says "skip scaffolding" or "use direct Nano Banana".**
+>
+> **Why the scaffold is preferred:** compose.py guarantees pixel-perfect headline text and preserves the exact simulator screenshot content. Nano Banana (`generate_image`) re-renders the text from scratch (often producing blurry or incorrect text) and may alter the phone screen content (inventing UI, changing colors, removing data). The two-stage scaffold → enhancement approach avoids both problems.
+>
+> **When to use this:** Only when the user explicitly requests to skip the scaffold step.
 
-1. **Skip compose.py entirely** — pass the raw simulator screenshot directly to Nano Banana
-2. **Let Nano Banana generate the device frame** — it will fit the screenshot properly inside its own generated phone mockup
-3. **Generate all 5 in parallel** — no scaffold step needed
+To use this mode:
+1. Pass the raw simulator screenshot directly to Nano Banana via `generate_image`
+2. Nano Banana generates its own device frame (text and screenshot content may be inaccurate)
+3. Generate all in parallel — no scaffold step needed
 
-**Direct prompt template:**
+**Prompt template:**
 
 ```
 Create a premium dark-mode App Store marketing screenshot for a [APP TYPE] app called [APP NAME].
-
-STYLE REFERENCE — See `styles/dark_gradient_style.md` for full style system.
 
 INSTRUCTIONS:
 - Take the input simulator screenshot and place it inside a photorealistic iPhone 15 Pro mockup with Dynamic Island
@@ -445,7 +448,7 @@ INSTRUCTIONS:
 - Add soft radial cyan glow behind the phone mockup
 - Add vignette darkening at the edges
 - Large bold white headline "[VERB]" stacked above "[DESCRIPTOR]" at the top in SF Pro Black weight
-- [BREAKOUT ELEMENTS — describe UI cards or navbar to pop out from phone]
+- [BREAKOUT ELEMENTS — describe specific UI cards to pop out from phone]
 - Phone can overlap with headline slightly
 - Phone bottom can crop off the canvas edge for dramatic depth
 
@@ -453,12 +456,12 @@ IMPORTANT — NAVBAR STAYS INSIDE:
 - The bottom navigation bar must REMAIN INSIDE the phone screen
 - Do NOT break out, extend, or move the navigation bar outside the device frame
 
-Style: Futuristic premium health-tech aesthetic, glassmorphism, neon cyan/teal highlights #00CDEB, clean and polished. See `styles/dark_gradient_style.md`.
+Style: Futuristic premium health-tech aesthetic, glassmorphism, neon cyan/teal highlights #00CDEB, clean and polished.
 ```
 
-**Breakout elements — navbar and key cards:**
-- The bottom navigation bar (with icons) should break out from the phone — extending beyond BOTH left and right edges of the device frame, overlapping the bezel on both sides, floating in front with a soft drop shadow
-- Key UI cards (progress circles, stat cards, charts) can also break out slightly
+**Breakout elements — key cards only (navbar stays inside):**
+- Key UI cards (progress circles, stat cards, charts) can break out from the phone — extending beyond BOTH left and right edges of the device frame, overlapping the bezel on both sides, floating in front with a soft drop shadow
+- The bottom navigation bar must ALWAYS stay inside the phone — never break it out
 - The main headline text stays at the top, not overlapped by breakouts
 
 #### First screenshot (no approved template yet)
