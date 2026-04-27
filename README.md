@@ -44,17 +44,17 @@ The app-icon skill:
 
 ## Installation
 
-The screenshot skill lives at the repository root. The app-icon skill lives in the [`skills/aso-appstore-icon/`](skills/aso-appstore-icon) subdirectory and must be installed as its own skill folder.
+Both skills live under the [`skills/`](skills/) directory following the [npx skills](https://skills.sh) convention.
 
 ### Install with npx skills (recommended)
 
 The fastest way to install across any agent (Claude Code, Codex, OpenCode, Cursor, and 40+ more):
 
 ```bash
-# Install screenshot skill to all detected agents (project scope)
+# Install all skills to all detected agents (project scope)
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots
 
-# Install to a specific agent
+# Install to specific agents
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a claude-code
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a codex
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a opencode
@@ -66,45 +66,33 @@ npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -g
 npx skills add akshaynexus/claude-skill-aso-appstore-screenshots --list
 ```
 
-The icon skill must be installed separately via manual symlink (see below) or by cloning and copying `skills/aso-appstore-icon/`.
-
 ### 1. Install the screenshot skill for Codex
 
 Codex discovers user skills from `~/.agents/skills/` and project skills from `.agents/skills/`.
-
-Global install:
-
-```bash
-codex skill install akshaynexus/claude-skill-aso-appstore-screenshots
-```
 
 In-place development symlink:
 
 ```bash
 mkdir -p "$HOME/.agents/skills"
 rm -f "$HOME/.agents/skills/aso-appstore-screenshots"
-ln -s "$(pwd)" "$HOME/.agents/skills/aso-appstore-screenshots"
+ln -s "$(pwd)/skills/aso-appstore-screenshots" "$HOME/.agents/skills/aso-appstore-screenshots"
 ```
 
 ### 2. Install the screenshot skill for Claude Code
 
 Claude Code discovers user skills from `~/.claude/skills/` and project skills from `.claude/skills/`.
 
-Global in-place development symlink:
+In-place development symlink:
 
 ```bash
 mkdir -p "$HOME/.claude/skills"
 rm -f "$HOME/.claude/skills/aso-appstore-screenshots"
-ln -s "$(pwd)" "$HOME/.claude/skills/aso-appstore-screenshots"
+ln -s "$(pwd)/skills/aso-appstore-screenshots" "$HOME/.claude/skills/aso-appstore-screenshots"
 ```
 
 If you prefer a project-local install inside a consuming app repository, use `.claude/skills/aso-appstore-screenshots`.
 
-### 3. Install the app-icon skill for Codex
-
-```bash
-codex skill install akshaynexus/claude-skill-aso-appstore-screenshots/aso-appstore-icon
-```
+### 3. Install the app-icon skill
 
 In-place development symlink:
 
@@ -231,18 +219,19 @@ The `final/` folder contains App Store-ready screenshots at exact Apple dimensio
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Screenshot skill prompt and workflow |
-| `agents/openai.yaml` | Screenshot skill UI metadata |
-| `CLAUDE.md` | Claude Code guidance for the screenshot skill |
-| `compose.py` | Deterministic screenshot scaffold generator |
-| `generate_frame.py` | Regenerates the screenshot device frame template |
-| `showcase.py` | Builds the final screenshot showcase image |
-| `resize.py` | Cross-platform screenshot crop/resize (replaces macOS-only sips) |
-| `assets/device_frame.png` | Pre-rendered iPhone frame template |
+| `skills/aso-appstore-screenshots/SKILL.md` | Screenshot skill prompt and workflow |
+| `skills/aso-appstore-screenshots/agents/openai.yaml` | Screenshot skill UI metadata |
+| `skills/aso-appstore-screenshots/compose.py` | Deterministic screenshot scaffold generator |
+| `skills/aso-appstore-screenshots/generate_frame.py` | Regenerates the screenshot device frame template |
+| `skills/aso-appstore-screenshots/showcase.py` | Builds the final screenshot showcase image |
+| `skills/aso-appstore-screenshots/resize.py` | Cross-platform screenshot crop/resize (replaces macOS-only sips) |
+| `skills/aso-appstore-screenshots/assets/device_frame.png` | Pre-rendered iPhone frame template |
+| `skills/aso-appstore-screenshots/assets/device_frame_android.png` | Pre-rendered Android frame template |
 | `skills/aso-appstore-icon/SKILL.md` | App-icon skill prompt and workflow |
 | `skills/aso-appstore-icon/agents/openai.yaml` | App-icon skill UI metadata |
 | `skills/aso-appstore-icon/prepare_icon.py` | Normalizes generated icons to exact App Store source requirements |
 | `skills/aso-appstore-icon/preview_icons.py` | Builds icon comparison and preview boards |
+| `CLAUDE.md` | Claude Code guidance for the screenshot skill |
 | `AGENTS.md` | Repository-specific engineering guidance |
 
 ## Verification
@@ -250,19 +239,11 @@ The `final/` folder contains App Store-ready screenshots at exact Apple dimensio
 Run these checks after updating the skill prompts or helper scripts:
 
 ```bash
-python3 -m py_compile compose.py generate_frame.py showcase.py
+python3 -m py_compile skills/aso-appstore-screenshots/compose.py skills/aso-appstore-screenshots/generate_frame.py skills/aso-appstore-screenshots/showcase.py skills/aso-appstore-screenshots/resize.py
 python3 -m py_compile skills/aso-appstore-icon/prepare_icon.py skills/aso-appstore-icon/preview_icons.py
 python3 -m unittest discover -s tests
 git diff --check
 ```
-=======
-| `SKILL.md` | The skill prompt — defines the multi-phase workflow |
-| `compose.py` | Deterministic scaffold generator (Pillow-based) |
-| `resize.py` | Cross-platform crop and resize to exact store dimensions (Pillow-based) |
-| `generate_frame.py` | Generates the device frame template |
-| `showcase.py` | Generates the side-by-side showcase image |
-| `assets/device_frame.png` | Pre-rendered iPhone device frame template |
->>>>>>> ff8f773 (Add cross-platform resize.py, keep sips as macOS fallback)
 
 ## License
 

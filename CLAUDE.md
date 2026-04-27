@@ -15,7 +15,7 @@ The repository root is the `aso-appstore-screenshots` skill. It supports both Cl
 
 ## Architecture
 
-Six files + two assets make up the skill:
+Six files + two assets make up the skill (all under `skills/aso-appstore-screenshots/`):
 
 - **SKILL.md** — The shared skill prompt. Defines the multi-phase workflow: Benefit Discovery → Screenshot Pairing → Generation → Showcase.
 - **compose.py** — A Pillow-based compositor that renders deterministic screenshot scaffolds with headline text, device frame template, and simulator screenshot. Supports multiple device profiles (iPhone 6.7", 6.5", 6.9", Android) via `--device` flag. Cross-platform font resolution (macOS/Linux/Windows).
@@ -40,7 +40,7 @@ Six files + two assets make up the skill:
 # Requires: pip install Pillow
 
 # iPhone 6.7" (default)
-python3 compose.py \
+python3 skills/aso-appstore-screenshots/compose.py \
   --bg "#E31837" \
   --verb "TRACK" \
   --desc "TRADING CARD PRICES" \
@@ -48,7 +48,7 @@ python3 compose.py \
   --output output.png
 
 # Android (Google Play)
-python3 compose.py \
+python3 skills/aso-appstore-screenshots/compose.py \
   --bg "#4CAF50" \
   --verb "TRACK" \
   --desc "YOUR EXPENSES" \
@@ -57,7 +57,7 @@ python3 compose.py \
   --device android
 
 # Custom font (cross-platform)
-python3 compose.py \
+python3 skills/aso-appstore-screenshots/compose.py \
   --bg "#E31837" \
   --verb "TRACK" \
   --desc "CARD PRICES" \
@@ -72,10 +72,10 @@ python3 compose.py \
 # Requires: pip install Pillow
 
 # Default: iPhone 6.7" (1290×2796)
-python3 resize.py screenshots/01-benefit/v1.jpg screenshots/01-benefit/v2.jpg screenshots/01-benefit/v3.jpg
+python3 skills/aso-appstore-screenshots/resize.py screenshots/01-benefit/v1.jpg screenshots/01-benefit/v2.jpg screenshots/01-benefit/v3.jpg
 
 # Custom dimensions (e.g. iPhone 6.5")
-python3 resize.py --width 1242 --height 2688 screenshots/01-benefit/v*.jpg
+python3 skills/aso-appstore-screenshots/resize.py --width 1242 --height 2688 screenshots/01-benefit/v*.jpg
 ```
 
 Each input file gets a `-resized` sibling (e.g. `v1.jpg` → `v1-resized.jpg`). Crops to the target aspect ratio (center-crop, top edge preserved) then resizes to exact dimensions.
@@ -93,7 +93,7 @@ Each input file gets a `-resized` sibling (e.g. `v1.jpg` → `v1-resized.jpg`). 
 Run these checks after changing the screenshot skill packaging or prompt:
 
 ```bash
-python3 -m py_compile compose.py generate_frame.py showcase.py resize.py
+python3 -m py_compile skills/aso-appstore-screenshots/compose.py skills/aso-appstore-screenshots/generate_frame.py skills/aso-appstore-screenshots/showcase.py skills/aso-appstore-screenshots/resize.py
 git diff --check
 ```
 

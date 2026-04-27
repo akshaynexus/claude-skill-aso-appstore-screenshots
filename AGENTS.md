@@ -8,15 +8,16 @@ The repository root is the `aso-appstore-screenshots` skill, which guides users 
 
 ## Architecture
 
-The main pieces are:
+The main pieces are (all under `skills/aso-appstore-screenshots/`):
 
 - **SKILL.md** — The skill prompt. Defines the multi-phase workflow: Benefit Discovery → Screenshot Pairing → Generation → Showcase. Resume state is stored in a project-local JSON ledger, defaulting to `.agents/aso-appstore-screenshots/state.json` while still reusing legacy `.codex/...` or `.claude/...` state if present.
 - **agents/openai.yaml** — Codex UI metadata for display name, short description, and default prompt.
-- **CLAUDE.md** — Claude Code guidance for the root screenshot skill.
-- **compose.py** — A standalone Python compositing script (Pillow-based) that deterministically renders App Store screenshots. Takes a background hex colour, action verb, benefit descriptor, and simulator screenshot path, then produces a pixel-perfect 1290×2796 PNG with headline text, device frame template, and the screenshot composited inside. The verb text auto-sizes to fit the canvas width.
-- **generate_frame.py** — Generates the device frame template PNG (`assets/device_frame.png`). Run once to create or update the template. The template is a 1290×2796 RGBA PNG with a black iPhone body, transparent screen cutout, Dynamic Island, and side buttons.
+- **compose.py** — A standalone Python compositing script (Pillow-based) that deterministically renders App Store screenshots. Takes a background hex colour, action verb, benefit descriptor, and simulator screenshot path, then produces a pixel-perfect 1290×2796 PNG with headline text, device frame template, and the screenshot composited inside. The verb text auto-sizes to fit the canvas width. Supports `--device` flag for iPhone 6.7/6.5/6.9 and Android profiles.
+- **generate_frame.py** — Generates device frame templates (`assets/device_frame.png` and `assets/device_frame_android.png`). Run once to create or update the templates.
 - **showcase.py** — Generates a showcase image showing up to 3 final screenshots side-by-side with an optional GitHub link at the bottom. Used as the final step after all screenshots are approved.
-- **assets/device_frame.png** — Pre-rendered iPhone device frame template used by `compose.py`. Using a template instead of drawing the frame at compose time ensures pixel-perfect consistency across all generated screenshots.
+- **resize.py** — Cross-platform screenshot crop/resize using Pillow (replaces macOS-only `sips`).
+- **assets/device_frame.png** — Pre-rendered iPhone device frame template used by `compose.py`.
+- **assets/device_frame_android.png** — Pre-rendered Android device frame template with punch-hole camera.
 
 ## Skill Runtime Assumptions
 
@@ -32,9 +33,8 @@ The main pieces are:
 
 ```bash
 # Requires: python3 -m pip install Pillow
-# Requires: SF Pro Display Black at /Library/Fonts/SF-Pro-Display-Black.otf
 
-python3 compose.py \
+python3 skills/aso-appstore-screenshots/compose.py \
   --bg "#E31837" \
   --verb "TRACK" \
   --desc "TRADING CARD PRICES" \
@@ -57,7 +57,7 @@ python3 compose.py \
 Run these checks after prompt or packaging changes:
 
 ```bash
-python3 -m py_compile compose.py generate_frame.py showcase.py
+python3 -m py_compile skills/aso-appstore-screenshots/compose.py skills/aso-appstore-screenshots/generate_frame.py skills/aso-appstore-screenshots/showcase.py skills/aso-appstore-screenshots/resize.py
 git diff --check
 ```
 
