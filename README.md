@@ -165,9 +165,26 @@ python3 skills/aso-appstore-screenshots/compose.py --font "/path/to/CustomFont.o
 
 ### 5. Configure Gemini MCP
 
-Both skills use Gemini as the generation and editing backend.
+Both skills use Gemini as the generation and editing backend. Pick the command for your agent:
 
-For Codex:
+**Claude Code** — add to `~/.claude/settings.json` (user-level) or `.mcp.json` (project-level):
+
+```json
+{
+  "mcpServers": {
+    "gemini": {
+      "command": "npx",
+      "args": ["-y", "@houtini/gemini-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "your-api-key-here",
+        "VERBOSE": "true"
+      }
+    }
+  }
+}
+```
+
+**Codex** — register via CLI:
 
 ```bash
 codex mcp add gemini --env GEMINI_API_KEY=your-api-key-here -- npx -y @houtini/gemini-mcp
@@ -176,17 +193,34 @@ codex mcp get gemini
 
 Codex stores MCP server registrations in `~/.codex/config.toml`.
 
-For Claude Code, register the same server command in your Claude MCP config:
+**OpenCode** — add to `opencode.json` in your project root:
 
-```text
-env GEMINI_API_KEY=your-api-key-here VERBOSE=true -- npx -y @houtini/gemini-mcp
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "gemini": {
+      "type": "local",
+      "command": ["npx", "-y", "@houtini/gemini-mcp"],
+      "environment": {
+        "GEMINI_API_KEY": "your-api-key-here",
+        "VERBOSE": "true"
+      },
+      "enabled": true
+    }
+  }
+}
 ```
-
-Use `~/.claude/settings.json` for a user-level server or a project `.mcp.json` for a repo-local server.
 
 If Gemini image generation or editing returns `429 RESOURCE_EXHAUSTED` with zero image quota, generation cannot continue. Enable billing or image-model quota for the Gemini project backing `GEMINI_API_KEY`, then resume later.
 
 ## Usage
+
+### Screenshot skill in Claude Code
+
+Claude Code can discover the screenshot skill automatically from `.claude/skills/` or `~/.claude/skills/` when the request matches the skill description.
+
+For explicit use, ask Claude Code to use `aso-appstore-screenshots` for the current app-store creative task. If your Claude Code build exposes user-invocable skills as slash commands, `/aso-appstore-screenshots` also works.
 
 ### Screenshot skill in Codex
 
@@ -198,13 +232,17 @@ Use aso-appstore-screenshots to generate App Store screenshots for my app
 
 You can also use the Codex skills picker or slash-command list once the skill is installed.
 
-### Screenshot skill in Claude Code
+### Screenshot skill in OpenCode
 
-Claude Code can discover the screenshot skill automatically from `.claude/skills/` or `~/.claude/skills/` when the request matches the skill description.
+OpenCode discovers skills from `.opencode/skills/`, `.claude/skills/`, or `.agents/skills/` in your project, plus `~/.config/opencode/skills/`, `~/.claude/skills/`, and `~/.agents/skills/` globally.
 
-For explicit use, ask Claude Code to use `aso-appstore-screenshots` for the current app-store creative task. If your Claude Code build exposes user-invocable skills as slash commands, `/aso-appstore-screenshots` also works.
+The skill loads on-demand via the native `skill` tool. Just mention it in your prompt:
 
-### App-icon skill in Codex
+```text
+Use aso-appstore-screenshots to generate App Store screenshots for my app
+```
+
+### App-icon skill
 
 ```text
 $aso-appstore-icon
