@@ -371,31 +371,6 @@ elif [ -d "$HOME/.codex/skills/aso-appstore-screenshots" ]; then
   SKILL_DIR="$HOME/.codex/skills/aso-appstore-screenshots"
 elif [ -d ".codex/skills/aso-appstore-screenshots" ]; then
   SKILL_DIR="$PWD/.codex/skills/aso-appstore-screenshots"
-fi
-
-# Ensure venv exists
-if [ ! -f "$SKILL_DIR/.venv/bin/python3" ]; then
-  python3 -m venv "$SKILL_DIR/.venv" && "$SKILL_DIR/.venv/bin/pip" install Pillow
-fi
-VENV_PYTHON="$SKILL_DIR/.venv/bin/python3"
-```
-The compose.py script lives in the skill directory. Run it to create the deterministic base screenshot. If the user chose a custom font, pass `--font "filename.otf"` to each compose.py call. If using the default, omit `--font`.
-
-**IMPORTANT — Batch all 3 scaffolds into a single Bash call** to minimize permission prompts. Chain the commands with `&&` so the user only needs to approve once:
-
-```bash
-if [ -d "$HOME/.agents/skills/aso-appstore-screenshots" ]; then
-  SKILL_DIR="$HOME/.agents/skills/aso-appstore-screenshots"
-elif [ -d ".agents/skills/aso-appstore-screenshots" ]; then
-  SKILL_DIR="$PWD/.agents/skills/aso-appstore-screenshots"
-elif [ -d "$HOME/.claude/skills/aso-appstore-screenshots" ]; then
-  SKILL_DIR="$HOME/.claude/skills/aso-appstore-screenshots"
-elif [ -d ".claude/skills/aso-appstore-screenshots" ]; then
-  SKILL_DIR="$PWD/.claude/skills/aso-appstore-screenshots"
-elif [ -d "$HOME/.codex/skills/aso-appstore-screenshots" ]; then
-  SKILL_DIR="$HOME/.codex/skills/aso-appstore-screenshots"
-elif [ -d ".codex/skills/aso-appstore-screenshots" ]; then
-  SKILL_DIR="$PWD/.codex/skills/aso-appstore-screenshots"
 else
   echo "aso-appstore-screenshots is not installed in a supported skill directory" >&2
   exit 1
@@ -446,6 +421,40 @@ For each of the 3 calls, use:
   - `./screenshots/01-[benefit-slug]/v2.jpg`
   - `./screenshots/01-[benefit-slug]/v3.jpg`
 
+#### Alternative: Direct Nano Banana (skip compose.py)
+
+If the scaffold's device frame doesn't properly fit the simulator screenshot (e.g., newer iPhone resolutions), use this approach instead:
+
+1. **Skip compose.py entirely** — pass the raw simulator screenshot directly to Nano Banana
+2. **Let Nano Banana generate the device frame** — it will fit the screenshot properly inside its own generated phone mockup
+3. **Generate all 5 in parallel** — no scaffold step needed
+
+**Direct prompt template:**
+
+```
+Create a premium dark-mode App Store marketing screenshot for a [APP TYPE] app called [APP NAME].
+
+INSTRUCTIONS:
+- Take the input simulator screenshot and place it inside a photorealistic iPhone 15 Pro mockup with Dynamic Island
+- The phone must be centered on the canvas, positioned high
+- The screenshot content must fit PERFECTLY inside the phone screen — no cropping, no distortion
+- Use a dark gradient background: near-black #090D0F blending to dark teal #062B2B
+- Add subtle abstract curved ribbon shapes in dark teal with low opacity
+- Add soft radial cyan glow behind the phone mockup
+- Add vignette darkening at the edges
+- Large bold white headline "[VERB]" stacked above "[DESCRIPTOR]" at the top in SF Pro Black weight
+- [BREAKOUT ELEMENTS — describe UI cards or navbar to pop out from phone]
+- Phone can overlap with headline slightly
+- Phone bottom can crop off the canvas edge for dramatic depth
+
+Style: Futuristic premium health-tech aesthetic, glassmorphism, neon cyan/teal highlights #00CDEB, clean and polished.
+```
+
+**Breakout elements — navbar and key cards:**
+- The bottom navigation bar (with icons) should break out from the phone — extending beyond BOTH left and right edges of the device frame, overlapping the bezel on both sides, floating in front with a soft drop shadow
+- Key UI cards (progress circles, stat cards, charts) can also break out slightly
+- The main headline text stays at the top, not overlapped by breakouts
+
 #### First screenshot (no approved template yet)
 
 Use only the scaffold as input:
@@ -492,7 +501,7 @@ TWO REFERENCE IMAGES:
 REQUIREMENTS:
 - CRITICAL: The device frame MUST match the style template EXACTLY — same photorealistic iPhone rendering, same size, same position, same shadows, same reflections, same edge treatment. Do NOT reinvent or reimagine the device frame. Reproduce it as closely as possible from the style template, only changing the screen contents.
 - Match the style template's text rendering style (same font treatment, same crispness, same visual weight)
-- Match the style template's background — clean, solid brand colour. No glows, gradients, radial patterns, or light effects.
+- Match the style template's background — clean, solid brand colour. Do NOT add glows, gradients, radial patterns, or light effects.
 - Use the scaffold's layout for positioning (text, device, screenshot placement)
 - OPTIONALLY add a PRIMARY breakout element — but ONLY if there is an obvious, visually compelling UI panel on the app screen that directly relates to the benefit headline. If nothing clearly reinforces the headline, skip the breakout entirely. When used, it MUST be an entire UI panel or grouped section (NOT individual small elements like a single button or icon). The panel must stay at the SAME vertical position and orientation as on screen — do NOT rotate or angle it. The panel must be SCALED UP significantly — rendered much larger than it appears on the phone screen — so that it extends dramatically beyond BOTH left and right edges of the device frame, clearly overlapping the phone bezel on both sides, expanding to nearly the full width of the screenshot canvas. Do NOT keep the panel at its original on-screen size. The panel itself must be enlarged. It should appear to float in front of the device at this larger scale — add a soft drop shadow beneath it to create depth. The panel MUST come from the app screenshot — same colours, same style, same content. Do NOT invent new elements.
 [PRIMARY BREAKOUT — if a relevant panel is obvious, describe the specific UI panel visible on screen to pop out with a drop shadow, extending beyond both device frame edges. Otherwise write "No breakout — the app screen speaks for itself."]
