@@ -161,6 +161,33 @@ def draw_centered(draw, y, text, font, canvas_w, max_w=None):
     return y
 
 
+def _detect_screen_area(frame_path):
+    """Detect the actual screen area (transparent region) from the frame template.
+    
+    Finds the bounding box of the transparent/semi-transparent area
+    where the app screenshot should be placed.
+    """
+    frame = Image.open(frame_path).convert("RGBA")
+    pixels = frame.load()
+    w, h = frame.size
+    
+    # Find the bounds of the transparent area (alpha < 128)
+    min_x, min_y, max_x, max_y = w, h, 0, 0
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = pixels[x, y]
+            if a < 128:
+                min_x = min(min_x, x)
+                min_y = min(min_y, y)
+                max_x = max(max_x, x)
+                max_y = max(max_y, y)
+    
+    if max_x <= min_x or max_y <= min_y:
+        return None
+    
+    return (min_x, min_y, max_x - min_x, max_y - min_y)
+
+
 def compose(bg_hex, verb, desc, screenshot_path, output_path, device="iphone-6.7", font=None):
     profile = DEVICE_PROFILES[device]
     canvas_w, canvas_h = profile["canvas"]
@@ -201,33 +228,51 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, device="iphone-6.7
     screen_y = device_y + bezel
 
     # ── 3. Screenshot into screen area ──────────────────────────────
+    # Auto-detect the actual screen area from the frame template
+    detected_screen = _detect_screen_area(frame_path)
+    if detected_screen:
+        # Use detected area offset from frame, accounting for device position
+        frame_screen_x, frame_screen_y, frame_screen_w, frame_screen_h = detected_screen
+        actual_screen_x = device_x + frame_screen_x
+        actual_screen_y = device_y + frame_screen_y
+        actual_screen_w = frame_screen_w
+        actual_screen_h = frame_screen_h
+    else:
+        # Fallback to calculated values
+        actual_screen_x = screen_x
+        actual_screen_y = screen_y
+        actual_screen_w = screen_w
+        actual_screen_h = canvas_h - screen_y
+
     shot = Image.open(screenshot_path).convert("RGBA")
-    visible_screen_h = canvas_h - screen_y + 500
-    # Scale to fill: use the larger scale factor so the screenshot
-    # covers both width and visible height (no black gaps)
-    scale_w = screen_w / shot.width
-    scale_h = visible_screen_h / shot.height
+    
+    # Scale to FILL the screen area (cover mode, like CSS background-size: cover)
+    # Use the larger scale factor so no black gaps appear
+    scale_w = actual_screen_w / shot.width
+    scale_h = actual_screen_h / shot.height
     scale = max(scale_w, scale_h)
     sc_w = int(shot.width * scale)
     sc_h = int(shot.height * scale)
     shot = shot.resize((sc_w, sc_h), Image.LANCZOS)
-
-    screen_h = canvas_h - screen_y + 500
+    
+    # Center the screenshot within the screen area if it overflows
+    paste_x = actual_screen_x + (actual_screen_w - sc_w) // 2
+    paste_y = actual_screen_y + (actual_screen_h - sc_h) // 2
 
     scr_mask = Image.new("L", canvas.size, 0)
     ImageDraw.Draw(scr_mask).rounded_rectangle(
-        [screen_x, screen_y, screen_x + screen_w, screen_y + screen_h],
+        [actual_screen_x, actual_screen_y, actual_screen_x + actual_screen_w, actual_screen_y + actual_screen_h],
         radius=screen_corner_r,
         fill=255,
     )
 
     scr_layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     ImageDraw.Draw(scr_layer).rounded_rectangle(
-        [screen_x, screen_y, screen_x + screen_w, screen_y + screen_h],
+        [actual_screen_x, actual_screen_y, actual_screen_x + actual_screen_w, actual_screen_y + actual_screen_h],
         radius=screen_corner_r,
         fill=(0, 0, 0, 255),
     )
-    scr_layer.paste(shot, (screen_x, screen_y))
+    scr_layer.paste(shot, (paste_x, paste_y))
     scr_layer.putalpha(scr_mask)
     canvas = Image.alpha_composite(canvas, scr_layer)
 
