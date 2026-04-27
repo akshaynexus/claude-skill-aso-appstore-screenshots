@@ -52,22 +52,21 @@ The fastest way to install across any agent (Claude Code, Codex, OpenCode, Curso
 
 ```bash
 # Install screenshot skill to all detected agents (project scope)
-npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots
 
 # Install to a specific agent
-npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -a claude-code
-npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -a codex
-npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -a opencode
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a claude-code
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a codex
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -a opencode
 
 # Install globally (available across all projects)
-npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -g
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots -g
 
-# Install the icon skill separately
-npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots --skill aso-appstore-icon
-
-# List available skills in this repo
-npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots --list
+# List available skills
+npx skills add akshaynexus/claude-skill-aso-appstore-screenshots --list
 ```
+
+The icon skill must be installed separately via manual symlink (see below) or by cloning and copying `skills/aso-appstore-icon/`.
 
 ### 1. Install the screenshot skill for Codex
 
