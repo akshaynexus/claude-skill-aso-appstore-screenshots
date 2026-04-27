@@ -1,7 +1,13 @@
 ---
 name: aso-appstore-screenshots
 description: Use when the user wants to plan, critique, or generate App Store or Google Play screenshots for an iOS or Android app, especially when they mention ASO screenshots, screenshot pairing, simulator/emulator screenshots, benefit headlines, or screenshot design. Uses compose.py for deterministic scaffolds and Gemini MCP for image enhancement.
-user-invocable: true
+allowed-tools:
+  - Bash
+  - Read
+  - Glob
+  - Grep
+  - Edit
+  - Write
 metadata:
   version: 1.0.0
 ---

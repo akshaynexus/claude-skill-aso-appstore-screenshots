@@ -1,6 +1,19 @@
 # ASO App Store Screenshots
 
+> **Forked from [adamlyttleapps/claude-skill-aso-appstore-screenshots](https://github.com/adamlyttleapps/claude-skill-aso-appstore-screenshots)** by Adam Lyttle. This fork adds Android/Google Play support, Codex integration, npx skills CLI compatibility, cross-platform font support, and cross-platform resize tooling.
+
 This repository contains two App Store creative skills:
+
+## Changes from Upstream
+
+| Feature | Description |
+|---------|-------------|
+| **Android (Google Play) support** | Device profiles system with `--device` flag (`iphone-6.7`, `iphone-6.5`, `iphone-6.9`, `android`). Android outputs 1080×2400 Google Play screenshots with punch-hole camera frame. |
+| **Codex support** | Dual runtime — works with both Claude Code and Codex via `agents/openai.yaml` metadata and shared JSON ledger at `.agents/aso-appstore-screenshots/state.json`. |
+| **npx skills CLI** | Fully compatible with `npx skills add` for installation across 40+ agents (Claude Code, Codex, OpenCode, Cursor, etc.). Skills live in root + `skills/` directory. |
+| **Cross-platform font support** | `--font` flag in `compose.py` with auto-detection per platform: SF Pro Display Black (macOS), Noto Sans Black (Linux), Arial Bold (Windows). |
+| **Cross-platform resize** | `resize.py` replaces macOS-only `sips` commands with Pillow-based crop/resize that works on macOS, Linux, and Windows. |
+| **Proportional typography** | Font sizes scale proportionally to canvas width instead of fixed pixels, ensuring consistent appearance across all device profiles. |
 
 ## What It Does
 
@@ -31,7 +44,30 @@ The app-icon skill:
 
 ## Installation
 
-The screenshot skill lives at the repository root. The app-icon skill lives in the [`aso-appstore-icon/`](aso-appstore-icon) subdirectory and must be installed as its own skill folder.
+The screenshot skill lives at the repository root. The app-icon skill lives in the [`skills/aso-appstore-icon/`](skills/aso-appstore-icon) subdirectory and must be installed as its own skill folder.
+
+### Install with npx skills (recommended)
+
+The fastest way to install across any agent (Claude Code, Codex, OpenCode, Cursor, and 40+ more):
+
+```bash
+# Install screenshot skill to all detected agents (project scope)
+npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots
+
+# Install to a specific agent
+npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -a claude-code
+npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -a codex
+npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -a opencode
+
+# Install globally (available across all projects)
+npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots -g
+
+# Install the icon skill separately
+npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots --skill aso-appstore-icon
+
+# List available skills in this repo
+npx skills add adamlyttleapps/claude-skill-aso-appstore-screenshots --list
+```
 
 ### 1. Install the screenshot skill for Codex
 
@@ -76,7 +112,7 @@ In-place development symlink:
 ```bash
 mkdir -p "$HOME/.agents/skills"
 rm -f "$HOME/.agents/skills/aso-appstore-icon"
-ln -s "$(pwd)/aso-appstore-icon" "$HOME/.agents/skills/aso-appstore-icon"
+ln -s "$(pwd)/skills/aso-appstore-icon" "$HOME/.agents/skills/aso-appstore-icon"
 ```
 
 If you are installing into a consuming app repository instead of your global user skills directory, use:
@@ -204,10 +240,10 @@ The `final/` folder contains App Store-ready screenshots at exact Apple dimensio
 | `showcase.py` | Builds the final screenshot showcase image |
 | `resize.py` | Cross-platform screenshot crop/resize (replaces macOS-only sips) |
 | `assets/device_frame.png` | Pre-rendered iPhone frame template |
-| `aso-appstore-icon/SKILL.md` | App-icon skill prompt and workflow |
-| `aso-appstore-icon/agents/openai.yaml` | App-icon skill UI metadata |
-| `aso-appstore-icon/prepare_icon.py` | Normalizes generated icons to exact App Store source requirements |
-| `aso-appstore-icon/preview_icons.py` | Builds icon comparison and preview boards |
+| `skills/aso-appstore-icon/SKILL.md` | App-icon skill prompt and workflow |
+| `skills/aso-appstore-icon/agents/openai.yaml` | App-icon skill UI metadata |
+| `skills/aso-appstore-icon/prepare_icon.py` | Normalizes generated icons to exact App Store source requirements |
+| `skills/aso-appstore-icon/preview_icons.py` | Builds icon comparison and preview boards |
 | `AGENTS.md` | Repository-specific engineering guidance |
 
 ## Verification
@@ -216,7 +252,7 @@ Run these checks after updating the skill prompts or helper scripts:
 
 ```bash
 python3 -m py_compile compose.py generate_frame.py showcase.py
-python3 -m py_compile aso-appstore-icon/prepare_icon.py aso-appstore-icon/preview_icons.py
+python3 -m py_compile skills/aso-appstore-icon/prepare_icon.py skills/aso-appstore-icon/preview_icons.py
 python3 -m unittest discover -s tests
 git diff --check
 ```
