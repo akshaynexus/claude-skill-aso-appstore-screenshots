@@ -59,9 +59,16 @@ ln -s "$(pwd)/skills/aso-appstore-icon" "$HOME/.agents/skills/aso-appstore-icon"
 
 ## Configure Gemini MCP
 
-Both skills need the Gemini MCP server. Pick your agent:
+Both skills need the Gemini MCP server. Use the CLI for your agent:
 
-**Claude Code** — add to `~/.claude/settings.json`:
+**Claude Code** — CLI:
+
+```bash
+claude mcp add --transport stdio --env GEMINI_API_KEY=your-key gemini -- npx -y @houtini/gemini-mcp
+claude mcp list   # verify
+```
+
+Or add to `~/.claude/settings.json` for manual config:
 
 ```json
 { "mcpServers": { "gemini": { "command": "npx", "args": ["-y", "@houtini/gemini-mcp"], "env": { "GEMINI_API_KEY": "your-key" } } } }
@@ -71,6 +78,7 @@ Both skills need the Gemini MCP server. Pick your agent:
 
 ```bash
 codex mcp add gemini --env GEMINI_API_KEY=your-key -- npx -y @houtini/gemini-mcp
+codex mcp get gemini
 ```
 
 **OpenCode** — CLI:
@@ -80,10 +88,10 @@ opencode mcp add    # interactive wizard
 opencode mcp list   # verify it's added
 ```
 
-Or add manually to `opencode.json`:
+Or add to `opencode.json`:
 
 ```json
-{ "$schema": "https://opencode.ai/config.json", "mcp": { "gemini": { "type": "local", "command": ["npx", "-y", "@houtini/gemini-mcp"], "environment": { "GEMINI_API_KEY": "your-key" }, "enabled": true } } }
+{ "mcp": { "gemini": { "type": "local", "command": ["npx", "-y", "@houtini/gemini-mcp"], "environment": { "GEMINI_API_KEY": "your-key" }, "enabled": true } } }
 ```
 
 Other OpenCode MCP commands:
