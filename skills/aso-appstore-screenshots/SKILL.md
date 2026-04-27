@@ -434,6 +434,8 @@ If the scaffold's device frame doesn't properly fit the simulator screenshot (e.
 ```
 Create a premium dark-mode App Store marketing screenshot for a [APP TYPE] app called [APP NAME].
 
+STYLE REFERENCE — See `styles/dark_gradient_style.md` for full style system.
+
 INSTRUCTIONS:
 - Take the input simulator screenshot and place it inside a photorealistic iPhone 15 Pro mockup with Dynamic Island
 - The phone must be centered on the canvas, positioned high
@@ -447,7 +449,11 @@ INSTRUCTIONS:
 - Phone can overlap with headline slightly
 - Phone bottom can crop off the canvas edge for dramatic depth
 
-Style: Futuristic premium health-tech aesthetic, glassmorphism, neon cyan/teal highlights #00CDEB, clean and polished.
+IMPORTANT — NAVBAR STAYS INSIDE:
+- The bottom navigation bar must REMAIN INSIDE the phone screen
+- Do NOT break out, extend, or move the navigation bar outside the device frame
+
+Style: Futuristic premium health-tech aesthetic, glassmorphism, neon cyan/teal highlights #00CDEB, clean and polished. See `styles/dark_gradient_style.md`.
 ```
 
 **Breakout elements — navbar and key cards:**
@@ -473,8 +479,8 @@ KEEP EXACTLY AS-IS:
 ENHANCE AND POLISH:
 - Replace the placeholder device frame with a photorealistic device mockup — for iOS use an iPhone 15 Pro, for Android use a Google Pixel 8 Pro — sleek, modern, with accurate proportions, reflections, and subtle shadows. The phone should look like a real device, not a flat rectangle. Keep the same position and size as the scaffold.
 - Refine the overall visual quality to look like a professional, high-budget App Store screenshot
-- OPTIONALLY add a PRIMARY breakout element — but ONLY if there is an obvious, visually compelling UI panel on the app screen that directly relates to the benefit headline. If nothing on screen clearly reinforces the headline, skip the breakout entirely — a clean screenshot with no breakout is better than a forced one. When you DO add a breakout, it MUST be an entire UI panel or grouped section (e.g., a complete card with its title and content, a full list section, a complete dialog/sheet) — never individual small elements like a single button, icon, or colour dot. IMPORTANT: The panel must stay at the SAME vertical position and orientation as where it appears on screen — do NOT rotate or angle it. The panel must be SCALED UP significantly — rendered much larger than it appears on the phone screen — so that it extends dramatically beyond BOTH left and right edges of the device frame, clearly overlapping the phone bezel on both sides, expanding to nearly the full width of the screenshot canvas. Do NOT keep the panel at its original on-screen size with just padding added around it. The panel itself must be enlarged. It should appear to float in front of the device at this larger scale — add a soft drop shadow beneath it to create depth and sell the hovering effect. The panel must look like it came from the app — same colours, same style, same content. Do NOT invent new elements.
-[PRIMARY BREAKOUT — if a relevant panel is obvious, describe the specific UI panel visible on screen and instruct it to extend beyond both edges of the device frame with a drop shadow, e.g., "The [panel name] card/row extends beyond both left and right edges of the device frame, overlapping the phone bezel on both sides, expanding to nearly the full screenshot width. It floats in front of the device with a soft drop shadow beneath it." If no panel clearly relates to the headline, write "No breakout — the app screen speaks for itself."]
+- OPTIONALLY add a PRIMARY breakout element — but ONLY if there is an obvious, visually compelling UI panel on the app screen that directly relates to the benefit headline. If nothing on screen clearly reinforces the headline, skip the breakout entirely — a clean screenshot with no breakout is better than a forced one. When you DO add a breakout, it MUST be an entire UI panel or grouped section (e.g., a complete card with its title and content, a full list section, a complete dialog/sheet) — never individual small elements like a single button, icon, or colour dot. IMPORTANT: The panel must stay at the SAME vertical position and orientation as where it appears on screen — do NOT rotate or angle it. The panel must be SCALED UP significantly — rendered much larger than it appears on the phone screen — so that it extends dramatically beyond BOTH left and right edges of the device frame, clearly overlapping the phone bezel on both sides, expanding to nearly the full screenshot width. Do NOT keep the panel at its original on-screen size with just padding added around it. The panel itself must be enlarged. It should appear to float in front of the device at this larger scale — add a soft drop shadow beneath it to create depth and sell the hovering effect. The panel must look like it came from the app — same colours, same style, same content. Do NOT invent new elements.
+[PRIMARY BREAKOUT — if a relevant panel is obvious, describe the specific UI panel visible on screen and instruct it to extend beyond both left and right edges of the device frame with a drop shadow, e.g., "The [panel name] card/row extends beyond both left and right edges of the device frame, overlapping the phone bezel on both sides, expanding to nearly the full screenshot width. It floats in front of the device with a soft drop shadow beneath it." If no panel clearly relates to the headline, write "No breakout — the app screen speaks for itself."]
 - Optionally add 1-2 secondary elements that reinforce the benefit and message of the screenshot — the kind of enhancements a professional graphic designer would add for impact. These are NOT from the app UI; they are creative additions that help clearly communicate what the screenshot is trying to portray to the user browsing the App Store. They should carry the message and support ASO conversion, but never at the cost of the overall design aesthetic. They must not compete with the primary breakout for attention.
 [SECONDARY ELEMENTS (optional) — describe 0-2 small supporting elements that tell the story, or "None needed"]
 - The background should be a clean, solid brand colour. Do NOT add glows, gradients, radial patterns, or light effects to the background. Keep it flat and bold.
@@ -645,9 +651,9 @@ After each screenshot is generated (or after the full set is complete), save gen
 - **Device profile used**: e.g., `iphone-6.7` or `android`
 - **For each generated screenshot**:
   - Benefit headline (ACTION VERB + DESCRIPTOR)
-  - Benefit subfolder path (e.g., `screenshots/01-track-card-prices/`)
+  - Benefit subfolder path (e.g., `screenshots/01-[benefit-slug]/`)
   - Which version the user chose (v1, v2, or v3)
-  - Final file path (e.g., `screenshots/final/01-track-card-prices.jpg`)
+  - Final file path (e.g., `screenshots/final/01-[benefit-slug].jpg`)
   - Simulator screenshot used (file path)
   - Breakout elements described in the prompt
   - Status: generated / approved / needs-redo
