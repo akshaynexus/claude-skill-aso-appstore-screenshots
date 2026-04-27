@@ -318,11 +318,21 @@ For each benefit + screenshot pair, generate **3 enhanced versions in parallel**
 
 Before generating any scaffolds, save the confirmed brand colour to the Claude Code memory system. Create or update the benefits memory file (e.g., `aso_benefits.md`) to include the brand colour name and hex code. This ensures the colour persists across conversations and is available immediately if the user resumes later.
 
-**Step 1: Ask the user which font to use**
+**Step 1: Confirm the font**
 
-Ask the user which font they'd like for the screenshot headlines. The script auto-detects a platform default (SF Pro Display Black on macOS, Noto Sans Black on Linux, Arial Bold on Windows), so if the user says "default" or doesn't have a preference, omit the `--font` flag.
+The font is auto-detected based on the target platform via the `--device` flag:
 
-They can provide a font filename (e.g., `Inter-Black.otf`) or a full path (e.g., `/usr/share/fonts/truetype/noto/NotoSans-Black.ttf`). Save the chosen font to memory alongside the brand colour so it persists across conversations.
+| Platform | Device flags | Default font | Alternative |
+|----------|-------------|-------------|-------------|
+| **iOS** | `iphone-6.7`, `iphone-6.5`, `iphone-6.9` | **SF Pro Display Black** (macOS) or Noto Sans Black (Linux) | Inter Black, Helvetica Neue Bold |
+| **Android** | `android` | **Roboto Black** | Noto Sans Black, Google Sans |
+
+- **iOS screenshots** should use Apple's SF Pro font family for native feel. The default is `SF-Pro-Display-Black.otf` which ships with macOS. On Linux, fall back to Noto Sans Black.
+- **Android screenshots** should use Roboto (Google's system font). The default is `Roboto-Black.ttf`. If not installed, download from [Google Fonts](https://fonts.google.com/specimen/Roboto) or use `--font` to pass a path.
+
+If the user wants a different font, they can provide a filename (e.g., `Inter-Black.otf`) or a full path (e.g., `/usr/share/fonts/truetype/noto/NotoSans-Black.ttf`). Save the chosen font to memory alongside the brand colour so it persists across conversations.
+
+If the user says "default" or doesn't have a preference, omit the `--font` flag — the script picks the right font automatically based on device type.
 
 **Step 2: Create the scaffold with compose.py**
 

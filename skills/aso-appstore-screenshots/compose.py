@@ -73,8 +73,21 @@ DESC_LINE_GAP = 24
 _SYSTEM = platform.system()
 
 if _SYSTEM == "Darwin":
-    _FONT_DIRS = ["/Library/Fonts", os.path.expanduser("~/Library/Fonts")]
-    _DEFAULT_FONT = "SF-Pro-Display-Black.otf"
+    _FONT_DIRS = [
+        "/System/Library/Fonts",
+        "/Library/Fonts",
+        os.path.expanduser("~/Library/Fonts"),
+    ]
+    # iOS: SF Pro Display Black → SFCompact → Helvetica Neue → Arial
+    _FONT_FALLBACKS_IOS = [
+        "SF-Pro-Display-Black.otf", "SFCompact.ttf", "SFNS.ttf",
+        "HelveticaNeue.ttc", "Arial Unicode.ttf",
+    ]
+    # Android: Roboto Black → Noto Sans Black → Arial
+    _FONT_FALLBACKS_ANDROID = [
+        "Roboto-Black.ttf", "Roboto-VariableFont_wdth,wght.ttf",
+        "NotoSans-Black.ttf", "Arial Unicode.ttf",
+    ]
 elif _SYSTEM == "Linux":
     _FONT_DIRS = [
         "/usr/share/fonts/truetype/noto",
@@ -83,38 +96,49 @@ elif _SYSTEM == "Linux":
         "/usr/local/share/fonts",
         os.path.expanduser("~/.local/share/fonts"),
     ]
-    _DEFAULT_FONT = "NotoSans-Black.ttf"
+    _FONT_FALLBACKS_IOS = ["NotoSans-Black.ttf", "NotoSans-Bold.ttf"]
+    _FONT_FALLBACKS_ANDROID = ["Roboto-Black.ttf", "NotoSans-Black.ttf"]
 else:  # Windows
     _FONT_DIRS = [os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")]
-    _DEFAULT_FONT = "arialbd.ttf"
+    _FONT_FALLBACKS_IOS = ["arialbd.ttf", "arial.ttf"]
+    _FONT_FALLBACKS_ANDROID = ["arialbd.ttf", "arial.ttf"]
+
+_DEFAULT_FONT_IOS = _FONT_FALLBACKS_IOS[0]
+_DEFAULT_FONT_ANDROID = _FONT_FALLBACKS_ANDROID[0]
+_DEFAULT_FONT = _DEFAULT_FONT_IOS
 
 
-def _resolve_font(font_name):
+def _resolve_font(font_name, fallbacks=None):
     """Find a font file by name, searching platform-appropriate directories.
 
     Accepts either a bare filename (searched in platform font dirs) or a full
     absolute path. On Linux, falls back to ``fc-match`` if the file isn't
     found in the standard directories.
+
+    If font_name is not found and fallbacks is provided, tries each fallback in order.
     """
-    if os.path.isabs(font_name) and os.path.isfile(font_name):
-        return font_name
-    for d in _FONT_DIRS:
-        candidate = os.path.join(d, font_name)
-        if os.path.isfile(candidate):
-            return candidate
-    # Linux fallback: ask fontconfig
-    if _SYSTEM == "Linux":
-        try:
-            result = subprocess.run(
-                ["fc-match", "-f", "%{file}", font_name],
-                capture_output=True, text=True,
-            )
-            if result.returncode == 0 and os.path.isfile(result.stdout.strip()):
-                return result.stdout.strip()
-        except FileNotFoundError:
-            pass
+    candidates = [font_name] + (fallbacks or [])
+    for name in candidates:
+        if os.path.isabs(name) and os.path.isfile(name):
+            return name
+        for d in _FONT_DIRS:
+            candidate = os.path.join(d, name)
+            if os.path.isfile(candidate):
+                return candidate
+        # Linux fallback: ask fontconfig
+        if _SYSTEM == "Linux":
+            try:
+                result = subprocess.run(
+                    ["fc-match", "-f", "%{file}", name],
+                    capture_output=True, text=True,
+                )
+                if result.returncode == 0 and os.path.isfile(result.stdout.strip()):
+                    return result.stdout.strip()
+            except FileNotFoundError:
+                pass
     raise FileNotFoundError(
-        f"Font '{font_name}' not found in: {', '.join(_FONT_DIRS)}. "
+        f"No font found. Tried: {', '.join(candidates)}. "
+        f"Searched in: {', '.join(_FONT_DIRS)}. "
         f"Pass a full path with --font /path/to/font.ttf"
     )
 
@@ -206,7 +230,13 @@ def compose(bg_hex, verb, desc, screenshot_path, output_path, device="iphone-6.7
     verb_size_min = int(canvas_w * VERB_SIZE_MIN_RATIO)
     desc_size = int(canvas_w * DESC_SIZE_RATIO)
 
-    font_path = _resolve_font(font or _DEFAULT_FONT)
+    # Pick platform-appropriate default font based on device profile
+    if font:
+        font_path = _resolve_font(font)
+    elif device == "android":
+        font_path = _resolve_font(_DEFAULT_FONT_ANDROID, fallbacks=_FONT_FALLBACKS_ANDROID)
+    else:
+        font_path = _resolve_font(_DEFAULT_FONT_IOS, fallbacks=_FONT_FALLBACKS_IOS)
 
     bg = hex_to_rgb(bg_hex)
 
