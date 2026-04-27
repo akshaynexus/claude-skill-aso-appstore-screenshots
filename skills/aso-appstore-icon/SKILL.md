@@ -1,15 +1,6 @@
 ---
 name: aso-appstore-icon
 description: Use when the user wants to audit, plan, or generate an App Store icon for an iOS app. Uses Pillow helpers for deterministic normalization and preview boards plus Gemini MCP for generation.
-allowed-tools:
-  - Bash
-  - Read
-  - Glob
-  - Grep
-  - Edit
-  - Write
-metadata:
-  version: 1.0.0
 ---
 
 # ASO App Store Icon
