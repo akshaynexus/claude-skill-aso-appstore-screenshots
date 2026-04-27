@@ -301,7 +301,10 @@ Breakout elements can give screenshots personality and make them feel dynamic. B
 **What to avoid**: Don't add decorative elements just because you can. No random icons, no excessive particles/sparkles, no elements unrelated to the benefit. The screenshot should feel polished and intentional, not busy.
 
 **Background (MUST be consistent across ALL screenshots in the set)**:
+- **IMPORTANT**: Check the app's existing theme (light/dark mode). Use a dark brand colour for dark-mode apps, or a light brand colour for light-mode apps. The scaffold background should match what the app screenshot already shows — if the screenshot has a dark UI, the scaffold background MUST be dark, not light.
 - Solid bold brand colour fills the entire canvas — same colour on every screenshot
+- For dark-theme apps: use dark colours (deep blues, purples, blacks, dark grays). Example: `#090D0F`, `#1a1a2e`, `#0F172A`
+- For light-theme apps: use bold bright colours (vibrant blues, purples, greens, etc.)
 - The background must be a clean, solid brand colour. Do NOT add glows, gradients, radial patterns, or light effects.
 - If accent shapes are used, use the same style of accent on every screenshot so the set looks like a cohesive series when viewed side-by-side
 
