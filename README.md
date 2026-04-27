@@ -136,10 +136,11 @@ Restart your agent after installing.
 
 ### 3. Install Python dependencies
 
-Both skills use Pillow-based local helpers:
+Both skills use Pillow-based local helpers. The skill auto-creates a `.venv/` inside its directory on first use — no manual setup needed. To pre-install:
 
 ```bash
-python3 -m pip install Pillow
+python3 -m venv skills/aso-appstore-screenshots/.venv
+skills/aso-appstore-screenshots/.venv/bin/pip install Pillow
 ```
 
 ### 4. Install the screenshot font dependency

@@ -326,7 +326,7 @@ They can provide a font filename (e.g., `Inter-Black.otf`) or a full path (e.g.,
 
 **Step 2: Create the scaffold with compose.py**
 
-The skill can live in a Codex or Claude Code skill discovery directory. Resolve it from the runtime-specific or shared locations. Use:
+The skill can live in a Codex or Claude Code skill discovery directory. Resolve it from the runtime-specific or shared locations. Set up a venv and install Pillow if not already done:
 
 ```bash
 if [ -d "$HOME/.agents/skills/aso-appstore-screenshots" ]; then
@@ -345,6 +345,39 @@ else
   echo "aso-appstore-screenshots is not installed in a supported skill directory" >&2
   exit 1
 fi
+
+# Create venv and install Pillow if needed (one-time setup)
+if [ ! -f "$SKILL_DIR/.venv/bin/python3" ]; then
+  python3 -m venv "$SKILL_DIR/.venv" && \
+  "$SKILL_DIR/.venv/bin/pip" install Pillow
+fi
+VENV_PYTHON="$SKILL_DIR/.venv/bin/python3"
+```
+
+The compose.py script lives in the skill directory. Run it to create the deterministic base screenshot. If the user chose a custom font, pass `--font "filename.otf"` to each compose.py call. If using the default, omit `--font`.
+
+**IMPORTANT — Batch all 3 scaffolds into a single Bash call** to minimize permission prompts. Chain the commands with `&&` so the user only needs to approve once:
+
+```bash
+if [ -d "$HOME/.agents/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.agents/skills/aso-appstore-screenshots"
+elif [ -d ".agents/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.agents/skills/aso-appstore-screenshots"
+elif [ -d "$HOME/.claude/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.claude/skills/aso-appstore-screenshots"
+elif [ -d ".claude/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.claude/skills/aso-appstore-screenshots"
+elif [ -d "$HOME/.codex/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$HOME/.codex/skills/aso-appstore-screenshots"
+elif [ -d ".codex/skills/aso-appstore-screenshots" ]; then
+  SKILL_DIR="$PWD/.codex/skills/aso-appstore-screenshots"
+fi
+
+# Ensure venv exists
+if [ ! -f "$SKILL_DIR/.venv/bin/python3" ]; then
+  python3 -m venv "$SKILL_DIR/.venv" && "$SKILL_DIR/.venv/bin/pip" install Pillow
+fi
+VENV_PYTHON="$SKILL_DIR/.venv/bin/python3"
 ```
 The compose.py script lives in the skill directory. Run it to create the deterministic base screenshot. If the user chose a custom font, pass `--font "filename.otf"` to each compose.py call. If using the default, omit `--font`.
 
@@ -369,19 +402,19 @@ else
 fi
 DEVICE="iphone-6.7" && \
 mkdir -p screenshots/01-[benefit-slug] screenshots/02-[benefit-slug] screenshots/03-[benefit-slug] && \
-python3 "$SKILL_DIR/compose.py" \
+$VENV_PYTHON "$SKILL_DIR/compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 1]" --desc "[DESC 1]" \
   --font "[FONT_FILE or omit flag]" \
   --screenshot [path/to/screenshot-1.png] \
   --device $DEVICE \
   --output screenshots/01-[benefit-slug]/scaffold.png && \
-python3 "$SKILL_DIR/compose.py" \
+$VENV_PYTHON "$SKILL_DIR/compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 2]" --desc "[DESC 2]" \
   --font "[FONT_FILE or omit flag]" \
   --screenshot [path/to/screenshot-2.png] \
   --device $DEVICE \
   --output screenshots/02-[benefit-slug]/scaffold.png && \
-python3 "$SKILL_DIR/compose.py" \
+$VENV_PYTHON "$SKILL_DIR/compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 3]" --desc "[DESC 3]" \
   --font "[FONT_FILE or omit flag]" \
   --screenshot [path/to/screenshot-3.png] \
@@ -484,7 +517,10 @@ No watermarks, no extra text, no app store UI chrome.
 
 ```bash
 SKILL_DIR="$HOME/.claude/skills/aso-appstore-screenshots" && \
-python3 "$SKILL_DIR/resize.py" \
+if [ ! -f "$SKILL_DIR/.venv/bin/python3" ]; then
+  python3 -m venv "$SKILL_DIR/.venv" && "$SKILL_DIR/.venv/bin/pip" install Pillow
+fi && \
+"$SKILL_DIR/.venv/bin/python3" "$SKILL_DIR/resize.py" \
   --width 1290 --height 2796 \
   screenshots/01-[benefit-slug]/v1.jpg \
   screenshots/01-[benefit-slug]/v2.jpg \
@@ -631,9 +667,12 @@ else
   echo "aso-appstore-screenshots is not installed in a supported skill directory" >&2
   exit 1
 fi
-python3 "$SKILL_DIR/showcase.py" \
+if [ ! -f "$SKILL_DIR/.venv/bin/python3" ]; then
+  python3 -m venv "$SKILL_DIR/.venv" && "$SKILL_DIR/.venv/bin/pip" install Pillow
+fi
+"$SKILL_DIR/.venv/bin/python3" "$SKILL_DIR/showcase.py" \
   --screenshots screenshots/final/01-*.jpg screenshots/final/02-*.jpg screenshots/final/03-*.jpg \
-  --github "github.com/Skipperlla" \
+  --github "github.com/akshaynexus" \
   --output screenshots/showcase.png
 ```
 

@@ -18,7 +18,7 @@ The repository root is the `aso-appstore-screenshots` skill. It supports both Cl
 Six files + two assets make up the skill (all under `skills/aso-appstore-screenshots/`):
 
 - **SKILL.md** — The shared skill prompt. Defines the multi-phase workflow: Benefit Discovery → Screenshot Pairing → Generation → Showcase.
-- **compose.py** — A Pillow-based compositor that renders deterministic screenshot scaffolds with headline text, device frame template, and simulator screenshot. Supports multiple device profiles (iPhone 6.7", 6.5", 6.9", Android) via `--device` flag. Cross-platform font resolution (macOS/Linux/Windows).
+- **compose.py** — A Pillow-based compositor that renders deterministic screenshot scaffolds with headline text, device frame template, and simulator screenshot. Supports multiple device profiles (iPhone 6.7", 6.5", 6.9", Android) via `--device` flag. Cross-platform font resolution (macOS/Linux/Windows). Uses a `.venv/` inside the skill directory for Pillow dependency isolation.
 - **generate_frame.py** — Regenerates `assets/device_frame.png` and `assets/device_frame_android.png`. Supports `--device` flag for all profiles.
 - **showcase.py** — Generates the final side-by-side preview of approved screenshots.
 - **resize.py** — Cross-platform screenshot crop/resize (replaces macOS-only `sips`).
@@ -37,10 +37,12 @@ Six files + two assets make up the skill (all under `skills/aso-appstore-screens
 ## Running compose.py
 
 ```bash
-# Requires: pip install Pillow
+# Auto-creates .venv/ and installs Pillow on first run
+SKILL=skills/aso-appstore-screenshots && \
+[ ! -f "$SKILL/.venv/bin/python3" ] && python3 -m venv "$SKILL/.venv" && "$SKILL/.venv/bin/pip" install Pillow
 
 # iPhone 6.7" (default)
-python3 skills/aso-appstore-screenshots/compose.py \
+$SKILL/.venv/bin/python3 $SKILL/compose.py \
   --bg "#E31837" \
   --verb "TRACK" \
   --desc "TRADING CARD PRICES" \
@@ -48,7 +50,7 @@ python3 skills/aso-appstore-screenshots/compose.py \
   --output output.png
 
 # Android (Google Play)
-python3 skills/aso-appstore-screenshots/compose.py \
+$SKILL/.venv/bin/python3 $SKILL/compose.py \
   --bg "#4CAF50" \
   --verb "TRACK" \
   --desc "YOUR EXPENSES" \
@@ -57,7 +59,7 @@ python3 skills/aso-appstore-screenshots/compose.py \
   --device android
 
 # Custom font (cross-platform)
-python3 skills/aso-appstore-screenshots/compose.py \
+$SKILL/.venv/bin/python3 $SKILL/compose.py \
   --bg "#E31837" \
   --verb "TRACK" \
   --desc "CARD PRICES" \
@@ -69,13 +71,14 @@ python3 skills/aso-appstore-screenshots/compose.py \
 ## Running resize.py
 
 ```bash
-# Requires: pip install Pillow
+SKILL=skills/aso-appstore-screenshots && \
+[ ! -f "$SKILL/.venv/bin/python3" ] && python3 -m venv "$SKILL/.venv" && "$SKILL/.venv/bin/pip" install Pillow
 
 # Default: iPhone 6.7" (1290×2796)
-python3 skills/aso-appstore-screenshots/resize.py screenshots/01-benefit/v1.jpg screenshots/01-benefit/v2.jpg screenshots/01-benefit/v3.jpg
+$SKILL/.venv/bin/python3 $SKILL/resize.py screenshots/01-benefit/v1.jpg screenshots/01-benefit/v2.jpg screenshots/01-benefit/v3.jpg
 
 # Custom dimensions (e.g. iPhone 6.5")
-python3 skills/aso-appstore-screenshots/resize.py --width 1242 --height 2688 screenshots/01-benefit/v*.jpg
+$SKILL/.venv/bin/python3 $SKILL/resize.py --width 1242 --height 2688 screenshots/01-benefit/v*.jpg
 ```
 
 Each input file gets a `-resized` sibling (e.g. `v1.jpg` → `v1-resized.jpg`). Crops to the target aspect ratio (center-crop, top edge preserved) then resizes to exact dimensions.

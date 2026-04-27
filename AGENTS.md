@@ -32,7 +32,7 @@ The main pieces are (all under `skills/aso-appstore-screenshots/`):
 ## Running compose.py
 
 ```bash
-# Requires: python3 -m pip install Pillow
+# Requires: Pillow (auto-installed to skill's .venv/ on first run)
 
 python3 skills/aso-appstore-screenshots/compose.py \
   --bg "#E31837" \
