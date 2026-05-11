@@ -9,6 +9,7 @@ import argparse
 import os
 import platform
 import subprocess
+import unicodedata
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -37,14 +38,18 @@ MOCKUP_PROFILES = {
     },
 }
 
+BASE_CANVAS_W = 1290
+BASE_CANVAS_H = 2796
+BASE_PHONE_W = 980
+BASE_PHONE_TOP = 775
+BASE_TEXT_TOP = 245
+BASE_LINE_SIZES = (210, 190)
+
 # Typography
-VERB_SIZE_MAX_RATIO = 0.18
-VERB_SIZE_MIN_RATIO = 0.116
-DESC_SIZE_RATIO = 0.09
 TEXT_W_RATIO = 0.88
 VERB_DESC_GAP = 16
 DESC_LINE_GAP = 20
-TEXT_TOP_RATIO = 0.08
+RTL_LOCALES = {"ar", "he", "fa", "ur"}
 
 # Font setup
 _SYSTEM = platform.system()
@@ -132,13 +137,102 @@ def fit_font(text, max_w, size_max, size_min, font_path):
     return ImageFont.truetype(font_path, size_min)
 
 
-def draw_centered(draw, y, text, font, canvas_w, max_w=None):
-    lines = word_wrap(draw, text, font, max_w) if max_w else [text]
-    for line in lines:
-        bbox = draw.textbbox((0, 0), line, font=font)
-        h = bbox[3] - bbox[1]
-        draw.text((canvas_w // 2, y - bbox[1]), line, fill="white", font=font, anchor="mt")
-        y += h + DESC_LINE_GAP
+def is_rtl_locale(locale):
+    return locale in RTL_LOCALES
+
+
+def detect_locale_from_text(text):
+    for ch in text:
+        if not ch.strip():
+            continue
+        name = unicodedata.name(ch, "")
+        if "ARABIC" in name or "PERSIAN" in name:
+            return "ar"
+        if "HEBREW" in name:
+            return "he"
+        if "DEVANAGARI" in name:
+            return "hi"
+    return "en"
+
+
+def shape_text(text, locale):
+    if not is_rtl_locale(locale):
+        return text
+    try:
+        from bidi.algorithm import get_display
+    except ImportError:
+        return text
+    if locale in {"ar", "fa", "ur"}:
+        try:
+            import arabic_reshaper
+
+            text = arabic_reshaper.reshape(text)
+        except ImportError:
+            return get_display(text)
+    return get_display(text)
+
+
+def locale_font_candidates(locale):
+    if locale in {"ar", "fa", "ur"}:
+        if _SYSTEM == "Darwin":
+            return [
+                "Arial Unicode MS.ttf",
+                "NotoSansArabic.ttf",
+                "Arial.ttf",
+                "Helvetica.ttf",
+            ]
+        if _SYSTEM == "Linux":
+            return [
+                "Noto Sans Arabic:style=Black",
+                "Noto Sans Arabic",
+                "NotoSansArabic.ttf",
+            ]
+        return ["NotoSansArabic.ttf", "Arial.ttf", "segoeui.ttf"]
+    if locale == "he":
+        if _SYSTEM == "Darwin":
+            return [
+                "Arial Unicode MS.ttf",
+                "ArialHebrew-Bold.ttf",
+                "NotoSansHebrew-Regular.ttf",
+            ]
+        if _SYSTEM == "Linux":
+            return [
+                "Noto Sans Hebrew:style=Bold",
+                "NotoSansHebrew.ttf",
+                "Noto Sans Hebrew",
+            ]
+        return ["NotoSansHebrew.ttf", "Arial.ttf", "segoeui.ttf"]
+    return []
+
+
+def draw_text_block(
+    draw,
+    y,
+    font_path,
+    canvas_w,
+    max_w,
+    lines,
+    line_sizes,
+    locale="en",
+    fill=(255, 255, 255, 255),
+):
+    for idx, text in enumerate(lines):
+        if not text:
+            continue
+        styled_text = text.upper()
+        shaped = shape_text(styled_text, locale)
+        target_size = line_sizes[min(idx, len(line_sizes) - 1)]
+        if is_rtl_locale(locale):
+            target_size = int(target_size * 0.85)
+        # Use a strict lower bound so tiny locales still remain readable.
+        min_size = max(58, int(target_size * 0.55))
+        font = fit_font(shaped, max_w, target_size, min_size, font_path)
+        wrapped = word_wrap(draw, shaped, font, max_w)
+        gap = VERB_DESC_GAP if idx == 0 else DESC_LINE_GAP
+        for line in wrapped:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            draw.text((canvas_w // 2, y - bbox[1]), line, fill=fill, font=font, anchor="mt")
+            y += int((bbox[3] - bbox[1]) * (1.08 if is_rtl_locale(locale) else 1.0)) + gap
     return y
 
 
@@ -202,6 +296,7 @@ def compose(
     font=None,
     device="iphone-6.7",
     frame_color=None,
+    locale="en",
 ):
     profile = MOCKUP_PROFILES[device]
     canvas_w, canvas_h = profile["canvas"]
@@ -222,9 +317,21 @@ def compose(
         frame_color_hex=frame_color,
     )
 
-    # Keep phone fill around 76% of canvas height and center on the canvas.
-    target_h = int(canvas_h * 0.76)
-    scale = target_h / mockup.size[1]
+    # Keep phone placement and scale consistent with DosesPro's scaffold pipeline:
+    # - scale by target phone width
+    # - place mockup at a fixed platform-calibrated top
+    # - derive top/width/text parameters from 1290×2796 baseline
+    scale_x = canvas_w / BASE_CANVAS_W
+    scale_y = canvas_h / BASE_CANVAS_H
+    phone_w = max(60, int(BASE_PHONE_W * scale_x))
+    phone_top = int(BASE_PHONE_TOP * scale_y)
+    text_top = int(BASE_TEXT_TOP * scale_y)
+    line_sizes = [max(80, int(s * scale_x)) for s in BASE_LINE_SIZES]
+
+    if phone_w >= canvas_w:
+        phone_w = canvas_w - 40
+    scale_x = phone_w / mockup.size[0]
+    scale = scale_x
     new_w = int(mockup.size[0] * scale)
     new_h = int(mockup.size[1] * scale)
     mockup_scaled = mockup.resize((new_w, new_h), Image.LANCZOS)
@@ -262,7 +369,7 @@ def compose(
     shot_cropped = shot_resized.crop((crop_left, crop_top, crop_left + sw, crop_top + sh))
 
     mockup_x = (canvas_w - new_w) // 2
-    mockup_y = int(canvas_h * 0.22)
+    mockup_y = phone_top
     paste_x = mockup_x + sx
     paste_y = mockup_y + sy
 
@@ -285,25 +392,34 @@ def compose(
     # Text
     draw = ImageDraw.Draw(canvas)
     max_text_w = int(canvas_w * TEXT_W_RATIO)
-    verb_size_max = int(canvas_w * VERB_SIZE_MAX_RATIO)
-    verb_size_min = int(canvas_w * VERB_SIZE_MIN_RATIO)
-    desc_size = int(canvas_w * DESC_SIZE_RATIO)
+    text_locale = locale if locale != "auto" else detect_locale_from_text(f"{verb} {desc}")
+    text_lines = [verb.upper(), desc.upper()]
 
     if font:
         font_path = _resolve_font(font)
     elif device == "android":
-        font_path = _resolve_font(_FONT_FALLBACKS_ANDROID[0], fallbacks=_FONT_FALLBACKS_ANDROID)
+        font_path = _resolve_font(
+            _FONT_FALLBACKS_ANDROID[0],
+            fallbacks=_FONT_FALLBACKS_ANDROID + locale_font_candidates(text_locale),
+        )
     else:
-        font_path = _resolve_font(_FONT_FALLBACKS_IOS[0], fallbacks=_FONT_FALLBACKS_IOS)
+        font_path = _resolve_font(
+            _FONT_FALLBACKS_IOS[0],
+            fallbacks=_FONT_FALLBACKS_IOS + locale_font_candidates(text_locale),
+        )
 
-    verb_font = fit_font(verb.upper(), max_text_w, verb_size_max, verb_size_min, font_path)
-    desc_font = ImageFont.truetype(font_path, desc_size)
-
-    text_top = int(canvas_h * TEXT_TOP_RATIO)
-    y = text_top
-    y = draw_centered(draw, y, verb.upper(), verb_font, canvas_w, max_w=max_text_w)
-    y += VERB_DESC_GAP
-    draw_centered(draw, y, desc.upper(), desc_font, canvas_w, max_w=max_text_w)
+    # Position copy-safe headline at the same scale as DosesPro's app_slide.
+    draw_text_block(
+        draw,
+        text_top,
+        font_path,
+        canvas_w,
+        max_text_w,
+        text_lines,
+        line_sizes,
+        locale=text_locale,
+        fill=(255, 255, 255, 255),
+    )
 
     canvas.convert("RGB").save(output_path, "PNG")
     print(f"✓ {output_path} ({canvas_w}×{canvas_h}) [{device}]")
@@ -328,6 +444,11 @@ def main():
         default="iphone-6.7",
         help="Device profile (iphone-6.7, iphone-6.5, iphone-6.9, android)",
     )
+    p.add_argument(
+        "--locale",
+        default="en",
+        help="Locale for RTL-aware shaping (for example en, ar, he, fa, ur, auto)",
+    )
     args = p.parse_args()
     compose(
         args.bg,
@@ -338,6 +459,7 @@ def main():
         font=args.font,
         device=args.device,
         frame_color=args.frame_color,
+        locale=args.locale.lower(),
     )
 
 
