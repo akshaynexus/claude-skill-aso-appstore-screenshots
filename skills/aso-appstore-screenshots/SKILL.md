@@ -237,25 +237,52 @@ Once benefits and screenshot pairings are confirmed, generate the final App Stor
 Which image generation tool do you want to use?
 
 1. **Gemini MCP** (Recommended) — Works in Claude Code, Codex CLI, and any terminal.
-   Uses Nano Banana Pro for high-quality App Store screenshots.
+   Uses the configured image-generation backend for high-quality App Store screenshots.
 
 2. **OpenAI Codex `$imagegen`** — Works ONLY in the Codex Desktop app.
    NOT available in Codex CLI. Uses `gpt-image-2` model.
 
-Recommendation: Use option 1 (Gemini MCP) unless you're in the Codex Desktop app.
+3. **Nano Banana** (if available in flow/config).
+
+Ask the user which tool they want to use from the options above (only list options that are actually configured/available).
 ```
 
 After the user picks, save their choice to the state JSON:
 
 ```json
 {
-  "generation_tool": "gemini"  // or "codex-imagegen"
+  "generation_tool": "gemini"  // or "codex-imagegen" or "nano-banana"
 }
 ```
 
 On subsequent runs, use the saved tool automatically — don't re-ask.
 
 ---
+
+### Mandatory: imagegen safety mode (for any image-generation backend)
+
+If the selected tool is image-generation based (`gemini`, `codex-imagegen`, or `nano-banana`), ask once before enhancement:
+
+`Would you like a **Static Normal Background** (deterministic scaffold only), or should we use **image generation for unique background styling** for this run?`
+
+Interpret the choice as:
+- **Static Normal Background** = skip enhancement stage and use scaffold mode only.
+- **Image generation** = run an image backend pass for richer, unique background styling while keeping text/device/screenshot locked.
+
+Image-gen options are:
+- **OpenAI Codex `$imagegen`**
+- **Nano Banana** (if available in flow/config)
+- **Gemini MCP** (`generate_image`)
+
+Default behavior: **Image generation** (run on the tool selected in this step) for visually richer backgrounds unless the user explicitly asks for static-only mode.
+
+Rules:
+
+- If the user chooses **Static Normal Background**, run only the scaffold path and skip all image generation enhancement calls.
+- If the user chooses **Image generation**, or gives no preference, proceed with the image generation steps below.
+- If the user chooses static-only, skip enhancement and only run scaffold steps.
+
+If the selected tool is **Nano Banana**, keep the same Stage 1 + Stage 2 flow, and use Nano Banana's image-generation API/tool call with the same scaffold-enhancement prompts.
 
 ### If User Chose: Gemini MCP
 
@@ -274,20 +301,27 @@ Before generating, verify the Gemini MCP server is available by checking that th
 See: https://github.com/houtini-ai/gemini-mcp for setup instructions.
 ```
 
-Do NOT proceed with generation if the tool is unavailable.
+Do NOT proceed with image-gen enhancement if the tool is unavailable.
+If the user has selected **Static Normal Background**, continue with scaffold generation and skip enhancement.
+
+If the user selected **Image generation**, continue with the image generation flow below.
 
 ---
 
 ### If User Chose: Codex `$imagegen`
 
 > **⚠️ Codex Desktop REQUIRED.** `$imagegen` only works in the **OpenAI Codex Desktop app** (macOS/Windows). It does NOT work in Codex CLI, Claude Code, or any terminal-based agent.
+> This requirement applies when **Image generation** mode is selected.  
+> In **Static Normal Background** mode, use the scaffold workflow only and skip imagegen entirely.
 
 When generating screenshots with Codex imagegen, follow these rules:
 
 1. **Scaffold step is the same** — use `mockup_compose.py` to create the scaffold, then pass it to imagegen as a reference image.
 2. **Invoke `$imagegen` explicitly** in the prompt — Codex needs to see this trigger.
-3. **Use the Codex prompt templates** from `codex_imagegen_prompt.md`.
+3. **Use the Codex prompt templates** from `styles/dark_gradient_prompt.md`.
 4. **Dimensions**: Same as Gemini — generate at a wider aspect ratio, then crop/resize to exact App Store dimensions.
+5. **Static Normal Background**: if user chose this mode, do not call `$imagegen`. Use scaffold only.
+6. **Image generation mode**: use `$imagegen` for atmosphere/creative enhancement. Keep text/frame/screenshot unchanged unless the user explicitly requests extra foreground effects.
 
 #### Codex imagegen invocation format:
 
@@ -295,19 +329,19 @@ When generating screenshots with Codex imagegen, follow these rules:
 $imagegen edit the attached scaffold into a premium dark-mode App Store marketing screenshot.
 
 Goal:
-Convert an App Store screenshot scaffold (headline + iPhone mockup + app screenshot) into a polished App Store listing image.
+Convert an App Store screenshot scaffold into a polished App Store listing image by improving only the background and atmosphere.
 
 Output:
 - Save as screenshots/[slug]/v1.jpg, v2.jpg, v3.jpg
 
 Style:
-Premium dark-mode, atmospheric depth, subtle abstract shapes in background, soft glow behind phone, vignette edges, drop shadow on phone. Minimal, clean, professional.
+Premium dark-mode, atmospheric depth, subtle feature-aligned abstract shapes in the background, soft glow behind phone, vignette edges, drop shadow on phone. Minimal, clean, professional.
 
 Guidelines:
-- DO NOT alter the headline text, iPhone frame, or app screenshot content
-- Add dark gradient background, subtle geometric elements, particles
+- DO NOT alter the headline text, descriptor, mockup frame, or app screenshot content
+- Add dark gradient background, subtle geometric elements, restrained atmosphere
 - Match the scaffold layout exactly — text position, phone position must remain unchanged
-- No sparkles, no neon, no extra text, no watermarks
+- No sparkles, no neon, no extra text, no watermarks, no redraw of phone content
 
 Avoid:
 Altering text, moving the phone, changing the screenshot content, adding fake UI, adding logos or extra branding.
@@ -318,7 +352,7 @@ Altering text, moving the phone, changing the screenshot content, adding fake UI
 Generate all 3 versions per screenshot in one invocation:
 
 ```txt
-$imagegen edit the attached scaffold into 3 variations of a premium dark-mode App Store screenshot. Vary the background abstract shapes and glow intensity slightly across versions. Save as v1.jpg, v2.jpg, v3.jpg. All other rules same as above.
+$imagegen edit the attached scaffold into 3 variations of a premium dark-mode App Store screenshot. **Vary only background atmosphere** (shape scale, glow intensity, and gradient direction) across versions. DO NOT move or alter the scaffold's text frame, mockup frame, or phone screenshot content. Save as v1.jpg, v2.jpg, v3.jpg. All other rules same as above.
 ```
 
 ---
@@ -337,7 +371,7 @@ App Store Connect is **very strict** about image dimensions — it will reject s
 
 Default to **1290 x 2796px** (iPhone 6.7") unless the user specifies otherwise. Up to 10 screenshots per display size.
 
-**IMPORTANT — Aspect ratio mismatch**: Apple's required dimensions are narrower than standard 9:16 (~0.461 ratio vs 0.5625). Nano Banana generates at preset aspect ratios, so we generate **wider than needed** at 9:16 with 4K resolution, then **crop and resize** down to exact Apple dimensions in a post-processing step (see Step 4 below). This approach avoids stretching — we remove excess width instead.
+**IMPORTANT — Aspect ratio mismatch**: Apple's required dimensions are narrower than standard 9:16 (~0.461 ratio vs 0.5625). Image-generation backends generate at preset aspect ratios, so we generate **wider than needed** at high resolution, then **crop and resize** down to exact Apple dimensions in a post-processing step (see Step 4 below). This approach avoids stretching — we remove excess width instead.
 
 #### Android — Google Play Store
 
@@ -363,7 +397,7 @@ Each screenshot follows this exact high-converting ASO format. **Consistency acr
 - **Horizontal safe area (CRITICAL)**: All text MUST stay well within the centre ~70% of the canvas width. Leave generous horizontal margins on both sides — at least 15% padding from each edge. This is essential because the post-processing step crops the sides of the image to convert from 9:16 to Apple's narrower aspect ratio. Any text near the left or right edges WILL be cut off. Keep headlines short enough to fit comfortably within this safe zone. If a headline is too long, break it across more lines rather than extending to the edges.
 
 **Device frame**:
-- A modern iPhone device mockup (black frame, dynamic island)
+- A modern iPhone or Android mockup matching the selected profile (`iPhone` for iOS, `S24 Ultra` for Android)
 - The device displays the paired simulator screenshot
 - The device is **positioned high on the canvas** — it overlaps or sits just below the headline text area, NOT pushed down to the bottom
 - The bottom of the device **bleeds off the bottom edge** of the canvas — the phone is intentionally cropped, not fully visible. This creates a dynamic, modern feel.
@@ -372,24 +406,26 @@ Each screenshot follows this exact high-converting ASO format. **Consistency acr
 **Breakout elements (optional — only when obvious and relevant)**:
 Breakout elements can give screenshots personality and make them feel dynamic. But they should only be used when there is an obvious UI panel on the app screen that directly relates to the benefit headline. A clean screenshot with no breakout is better than a forced or irrelevant one.
 
-- **Primary — Feature zoom-out (only when relevant)**: If there is an obvious, visually compelling entire UI panel or grouped section on the app screen that directly reinforces the benefit headline, make it "pop out" from the device frame. The panel must stay at the same vertical position and orientation as where it appears on the app screen — NOT rotated or angled. It should extend dramatically beyond BOTH left and right edges of the device frame, clearly overlapping the phone bezel on both sides, expanding to nearly the full width of the screenshot canvas. The panel must be SCALED UP significantly — much larger than it appears on the phone screen — so that it extends well beyond both left and right edges of the device frame. It should look like it is floating in front of the phone at a larger scale, bursting out of the phone's boundaries. Add a soft drop shadow beneath the breakout panel to create depth and make it feel like it's hovering above the device. The enlarged size plus the overlap with the device frame edges plus the shadow is what creates the dramatic pop-out effect. The panel must be a complete card/section (not an individual button, icon, or small element). If no panel clearly relates to the headline, skip the breakout entirely.
-- **Secondary — Supporting elements (OPTIONAL, use restraint)**: You may add 1-2 small supporting elements (contextual icons, subtle directional cues, small floating UI elements) ONLY if they are directly relevant to the benefit and enhance the story. These must NOT compete with the primary zoom-out element for attention. Less is more — a clean composition with one strong breakout element is better than a cluttered one with many. Every element added must earn its place by helping tell the story of that screen.
+- **Primary — Feature zoom-out (default OFF)**: Use only if the user explicitly requests extra effects and an obvious relevant panel exists.
+- **Secondary — Supporting elements (default OFF)**: Avoid unless explicitly requested with extra effects.
 
 **What to avoid**: Don't add decorative elements just because you can. No random icons, no excessive particles/sparkles, no elements unrelated to the benefit. The screenshot should feel polished and intentional, not busy.
 
 **Background (MUST be consistent across ALL screenshots in the set)**:
-- **IMPORTANT**: Check the app's existing theme (light/dark mode). Use a dark brand colour for dark-mode apps, or a light brand colour for light-mode apps. The scaffold background should match what the app screenshot already shows — if the screenshot has a dark UI, the scaffold background MUST be dark, not light.
-- Solid bold brand colour fills the entire canvas — same colour on every screenshot
+- **IMPORTANT**: Use the user-confirmed brand/feature style as the base for all outputs.
+- Scaffold backgrounds remain deterministic solid fills from `--bg` in Stage 1.
+- Stage 2 imagegen only enriches the atmosphere: gradients, glow, and light abstract accents tied to the feature.
 - For dark-theme apps: use dark colours (deep blues, purples, blacks, dark grays). Example: `#090D0F`, `#1a1a2e`, `#0F172A`
 - For light-theme apps: use bold bright colours (vibrant blues, purples, greens, etc.)
-- The background must be a clean, solid brand colour. Do NOT add glows, gradients, radial patterns, or light effects.
-- If accent shapes are used, use the same style of accent on every screenshot so the set looks like a cohesive series when viewed side-by-side
+- If accent shapes are used, keep the same style across the feature set so screenshots remain cohesive.
 
 ### Generation Process — Two-Stage: Scaffold then Enhance
 
 Generation uses a two-stage approach for consistency:
 1. **Stage 1 (Scaffold)**: mockup_compose.py creates a deterministic local image with the correct text, device frame, and screenshot. This guarantees consistent layout across all screenshots.
-2. **Stage 2 (Enhance)**: The scaffold is sent to Nano Banana Pro to add breakout elements, depth, and visual polish.
+2. **Stage 2 (Enhance)**: The scaffold is sent to the selected image-generation backend to add atmospheric background styling. Extra visual effects are optional and only enabled on user request.
+
+**Default mode**: background-only enhancement. Keep headline, subtitle, phone frame, and phone screen content unchanged and generate 3 atmosphere-focused variants.
 
 **The first approved screenshot becomes the style template for the entire set.** All subsequent screenshots are enhanced using both their own scaffold (for layout) AND the first approved screenshot (for style). This ensures every screenshot in the set has the same device frame rendering, text treatment, background style, and overall visual quality — so when viewed side-by-side in the App Store, they look like a cohesive professional set.
 
@@ -471,18 +507,21 @@ mkdir -p screenshots/01-[benefit-slug] screenshots/02-[benefit-slug] screenshots
 $VENV_PYTHON "$SKILL_DIR/mockup_compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 1]" --desc "[DESC 1]" \
   --font "[FONT_FILE or omit flag]" \
+  --frame-color "[HEX FRAME COLOR or omit for default]" \
   --screenshot [path/to/screenshot-1.png] \
   --device $DEVICE \
   --output screenshots/01-[benefit-slug]/scaffold.png && \
 $VENV_PYTHON "$SKILL_DIR/mockup_compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 2]" --desc "[DESC 2]" \
   --font "[FONT_FILE or omit flag]" \
+  --frame-color "[HEX FRAME COLOR or omit for default]" \
   --screenshot [path/to/screenshot-2.png] \
   --device $DEVICE \
   --output screenshots/02-[benefit-slug]/scaffold.png && \
 $VENV_PYTHON "$SKILL_DIR/mockup_compose.py" \
   --bg "[HEX CODE]" --verb "[VERB 3]" --desc "[DESC 3]" \
   --font "[FONT_FILE or omit flag]" \
+  --frame-color "[HEX FRAME COLOR or omit for default]" \
   --screenshot [path/to/screenshot-3.png] \
   --device $DEVICE \
   --output screenshots/03-[benefit-slug]/scaffold.png
@@ -492,15 +531,26 @@ Set `DEVICE` to the appropriate profile:
 - iOS: `iphone-6.7` (default), `iphone-6.5`, or `iphone-6.9`
 - Android: `android`
 
-This outputs pixel-perfect 1290×2796 PNGs with:
+This outputs platform-correct PNGs with:
 - Bold white headline text (verb auto-sized to fit canvas width)
-- iPhone device frame (from pre-rendered template)
+- Platform mockup frame (`iPhone` for iOS, `Samsung S24 Ultra` for Android)
 - Simulator screenshot composited inside the frame
 - Solid background colour
 
-The scaffolds are internal intermediates — do NOT show them to the user or ask for confirmation. Proceed immediately to Step 3 (Nano Banana enhancement).
+The scaffolds are internal intermediates — do NOT show them to the user or ask for confirmation.
 
-**Step 3: Enhance with Nano Banana Pro (3 versions in parallel)**
+If the user selected **Static Normal Background**, skip Step 3 and proceed to resizing/validation/output.
+If the user selected **Image generation**, continue with Step 3.
+
+Default enhancement behavior is background-first:
+- no changes to headline/descriptor
+- no changes to device frame
+- no changes to screenshot pixels (including in-phone callouts/labels/chips)
+- only atmospheric/background treatment is varied across versions
+
+Only when the user explicitly requests extra foreground effects, allow foreground breakouts and card pop-outs.
+
+**Step 3: Enhance with image generation backend (3 versions in parallel)** — only run this step in Image generation mode.
 
 Make **3 parallel `edit_image` calls**. The parallel execution is critical — always fire all 3 calls in a single message, never sequentially.
 
@@ -512,17 +562,18 @@ For each of the 3 calls, use:
   - `./screenshots/01-[benefit-slug]/v2.jpg`
   - `./screenshots/01-[benefit-slug]/v3.jpg`
 
-#### Direct Nano Banana — LAST RESORT ONLY (skip mockup_compose.py scaffold)
+#### Direct image generation — LAST RESORT ONLY (skip mockup_compose.py scaffold)
 
-> **⚠️ DO NOT USE THIS BY DEFAULT. Only use when the user explicitly says "skip scaffolding" or "use direct Nano Banana".**
+> **⚠️ DO NOT USE THIS BY DEFAULT. Only use when the user explicitly says "skip scaffolding" or asks for a direct image-gen pass.**
+> **ALSO: only run this mode when the user explicitly requests skipping the scaffold.**
 >
-> **Why the scaffold is preferred:** mockup_compose.py guarantees pixel-perfect headline text and preserves the exact simulator screenshot content. Nano Banana (`generate_image`) re-renders the text from scratch (often producing blurry or incorrect text) and may alter the phone screen content (inventing UI, changing colors, removing data). The two-stage scaffold → enhancement approach avoids both problems.
+> **Why the scaffold is preferred:** mockup_compose.py guarantees pixel-perfect headline text and preserves the exact simulator screenshot content. Image generators may re-render text from scratch and may alter the phone screen content (inventing UI, changing colors, removing data). The two-stage scaffold → enhancement approach avoids this.
 >
 > **When to use this:** Only when the user explicitly requests to skip the scaffold step.
 
 To use this mode:
-1. Pass the raw simulator screenshot directly to Nano Banana via `generate_image`
-2. Nano Banana generates its own device frame (text and screenshot content may be inaccurate)
+1. Pass the raw simulator screenshot directly to the selected backend (`generate_image` for Gemini MCP, `$imagegen` for Codex)
+2. The backend generates its own device frame and content (which may be inconsistent)
 3. Generate all in parallel — no scaffold step needed
 
 **Prompt template:**
@@ -531,7 +582,7 @@ To use this mode:
 Create a premium dark-mode App Store marketing screenshot for a [APP TYPE] app called [APP NAME].
 
 INSTRUCTIONS:
-- Take the input simulator screenshot and place it inside a photorealistic iPhone 15 Pro mockup with Dynamic Island
+- Take the input simulator screenshot and place it inside a realistic platform mockup (iPhone 15 Pro for iOS, S24 Ultra for Android)
 - The phone must be centered on the canvas, positioned high
 - The screenshot content must fit PERFECTLY inside the phone screen — no cropping, no distortion
 - Use a dark gradient background: near-black #090D0F blending to dark teal #062B2B
@@ -562,7 +613,7 @@ Use only the scaffold as input:
 
 **First screenshot prompt template:**
 
-See `styles/dark_gradient_prompt.md` for the base enhancement prompt. Customize the `[BREAKOUT]` placeholder with the specific UI card for this benefit.
+See `styles/dark_gradient_prompt.md` for the base enhancement prompt. Set `[BREAKOUT]` to `No breakout needed.` by default. Only replace it with a concrete card/panel when the user explicitly requests foreground effects.
 
 #### Subsequent screenshots (after first is approved)
 
@@ -592,18 +643,18 @@ MATCH FROM STYLE TEMPLATE:
 - Text shadow for legibility
 
 OPTIONAL — ONE BREAKOUT ELEMENT:
-[BREAKOUT — describe the specific UI card to extract, or write "No breakout needed."]
+[BREAKOUT — describe the specific UI card to extract, or write "No breakout needed." (default).]
 
 Style: Clean, minimal, premium dark-mode. Less is more.
 No sparkles, no floating icons, no particles, no extra decorative elements.
 No watermarks, no extra text, no app store UI chrome.
 ```
 
-**IMPORTANT — Consistency enforcement**: The scaffold guarantees consistent layout. The style template guarantees consistent visual treatment. If Nano Banana changes the text, layout, or deviates from the style template, regenerate.
+**IMPORTANT — Consistency enforcement**: The scaffold guarantees consistent layout. The style template guarantees consistent visual treatment. If image generation changes the text, layout, or deviates from the style template, regenerate.
 
 **Step 4: IMMEDIATELY crop and resize ALL 3 versions to App Store dimensions**
 
-⚠️ **You MUST run this immediately after all 3 `edit_image` calls complete. Do NOT show the user any image before running this. The raw Nano Banana output is always the wrong dimensions for App Store Connect.**
+⚠️ **You MUST run this immediately after all 3 `edit_image` calls complete. Do NOT show the user any image before running this. The raw image-gen output is always the wrong dimensions for App Store Connect.**
 
 **CRITICAL — Use exactly ONE Bash tool call for all 3 crop/resize operations.** Do NOT make 3 separate Bash calls. Do NOT use parallel Bash calls. Use the single command below so the user only sees one permission prompt.
 
@@ -651,7 +702,7 @@ Target dimensions per display size — adjust `TARGET_W` and `TARGET_H`:
 
 **Step 5: Review all 3 versions with the user**
 
-Present all 3 **resized** versions (the `-resized.jpg` files) to the user using the Read tool. Never show the raw Nano Banana output — always show the post-processed versions.
+Present all 3 **resized** versions (the `-resized.jpg` files) to the user using the Read tool. Never show the raw image-gen output — always show the post-processed versions.
 
 Label them clearly as **Version 1**, **Version 2**, and **Version 3** and ask the user to pick their favourite or request changes.
 
@@ -701,7 +752,7 @@ This keeps `final/` clean — only approved, App Store-ready screenshots, one pe
 screenshots/
   01-track-card-prices/       ← working versions for benefit 1
     scaffold.png              ← deterministic mockup_compose.py output (text + frame + screenshot)
-    v1.jpg                    ← Nano Banana enhanced version 1
+    v1.jpg                    ← enhanced version 1 (image generation output)
     v1-resized.jpg            ← cropped/resized to App Store dimensions
     v2.jpg
     v2-resized.jpg

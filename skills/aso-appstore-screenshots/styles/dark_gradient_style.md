@@ -21,7 +21,7 @@ Premium dark-mode mobile app marketing screenshot style.
 - Keep it clean and minimal
 
 ## Phone Mockup
-- iPhone 17 Pro with black frame, centered on canvas
+- Platform mockup matching selection: iPhone for iOS, S24 Ultra for Android, centered on canvas
 - Full phone visible (no cropping at bottom)
 - Screenshot content must fit perfectly inside the screen
 - Soft drop shadow behind the device
@@ -42,11 +42,13 @@ Premium dark-mode mobile app marketing screenshot style.
 - Must look like it came from the app — same colors, same content
 - No rotation, no angling — stays at same vertical position as on screen
 - Skip the breakout entirely if no panel clearly relates to the headline
+- Default is "no breakout needed"; enable only on explicit extra-effects request
 
 ## Rules
 ### Do:
 - Keep it minimal and clean
 - Let the phone and app content be the focus
+- Preserve the captured in-phone callouts/labels/chips; only optional breakouts may pop out when explicitly requested
 - Use ONE breakout element maximum
 - Dark gradient + glow + vignette — that's it for background
 
